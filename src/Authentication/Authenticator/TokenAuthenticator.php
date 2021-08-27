@@ -3,10 +3,7 @@
 namespace Gaara\Authentication\Authenticator;
 
 use Gaara\Authentication\AuthenticatorInterface;
-use Gaara\Authentication\Exception\InvalidTokenException;
-use Gaara\Authentication\Token\GenericToken;
 use Gaara\User\UserInterface;
-use Gaara\Authentication\TokenInterface;
 use Gaara\User\UserProviderInterface;
 use Psr\SimpleCache\CacheInterface;
 
@@ -83,7 +80,7 @@ class TokenAuthenticator implements AuthenticatorInterface
 			return false;
 		}
 
-		return $this->cache->has($this->getCacheKey($package['userId']));
+		return true;
 	}
 
 	/**
