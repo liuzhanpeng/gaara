@@ -3,8 +3,6 @@
 namespace Gaara\Authentication\Authenticator;
 
 use Gaara\Authentication\AuthenticatorInterface;
-use Gaara\Authentication\Token\NullToken;
-use Gaara\Authentication\TokenInterface;
 use Gaara\User\UserInterface;
 use Gaara\User\UserProviderInterface;
 
@@ -63,7 +61,7 @@ class SessionAuthenticator implements AuthenticatorInterface
 	/**
 	 * @inheritDoc
 	 */
-	public function authenticate(UserInterface $user): TokenInterface
+	public function authenticate(UserInterface $user): ?string
 	{
 		if ($this->mode === self::MODE_ALL_DATA) {
 			$this->session->set($this->sessionKey, $user);
@@ -71,13 +69,13 @@ class SessionAuthenticator implements AuthenticatorInterface
 			$this->session->set($this->sessionKey, $user->id());
 		}
 
-		return new NullToken($user);
+		return null;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
-	public function isAuthenticate(): bool
+	public function isAuthenticated(): bool
 	{
 		return $this->session->has($this->sessionKey);
 	}
@@ -102,7 +100,7 @@ class SessionAuthenticator implements AuthenticatorInterface
 	 */
 	public function user(UserProviderInterface $userProvider): ?UserInterface
 	{
-		if (!$this->isAuthenticate()) {
+		if (!$this->isAuthenticated()) {
 			return null;
 		}
 

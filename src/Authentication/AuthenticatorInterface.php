@@ -17,16 +17,16 @@ interface AuthenticatorInterface
 	 * 成功返回令牌，否则抛出异常
 	 *
 	 * @param UserInterface $user 用户身份
-	 * @return TokenInterface
+	 * @return string|null
 	 */
-	function authenticate(UserInterface $user): TokenInterface;
+	function authenticate(UserInterface $user): ?string;
 
 	/**
 	 * 判断是否已认证
 	 *
 	 * @return boolean
 	 */
-	function isAuthenticate(): bool;
+	function isAuthenticated(): bool;
 
 	/**
 	 * 返回用户标识
