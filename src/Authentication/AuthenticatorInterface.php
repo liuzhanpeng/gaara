@@ -3,6 +3,7 @@
 namespace Gaara\Authentication;
 
 use Gaara\User\UserInterface;
+use Gaara\User\UserProviderInterface;
 
 /**
  * 认证器接口
@@ -21,12 +22,27 @@ interface AuthenticatorInterface
 	function authenticate(UserInterface $user): TokenInterface;
 
 	/**
+	 * 判断是否已认证
+	 *
+	 * @return boolean
+	 */
+	function isAuthenticate(): bool;
+
+	/**
+	 * 返回用户标识
+	 *
+	 * @return mixed
+	 */
+	function id();
+
+	/**
 	 * 通过上下文获取用户身份
 	 * 找不到返回null
 	 *
+	 * @param UserProviderInterface $userProvider 用户身份提供器
 	 * @return UserInterface|null
 	 */
-	function user(): ?UserInterface;
+	function user(UserProviderInterface $userProvider): ?UserInterface;
 
 	/**
 	 * 清除上下文的用户身份

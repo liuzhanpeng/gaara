@@ -2,7 +2,7 @@
 
 namespace Gaara;
 
-use Gaara\Authentication\UserProvider\UserProviderInterface;
+use Gaara\User\UserProviderInterface;
 use Gaara\User\UserInterface;
 
 class Gate
