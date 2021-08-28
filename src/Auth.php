@@ -103,10 +103,22 @@ class Auth
 	 */
 	public static function make(?string $name = null): Gate
 	{
-		if (!isset(static::$gates[$name])) {
-			$config = static::$config[$name];
+		if (is_null($name)) {
+			if (!isset(static::$config['default'])) {
+				throw new \Exception('找不到default配置项');
+			}
 
-			$userProvider = static::createUserProvider($config['provider']);
+			$name = static::$config['default'];
+		}
+
+		if (!isset(static::$gates[$name])) {
+			if (!isset($config['gates'][$name])) {
+				throw new \Exception(sprintf('找不到gate[%s]配置', $name));
+			}
+
+			$config = static::$config['gates'][$name];
+
+			$userProvider = static::createUserProvider($config['user_provider']);
 			$authenticator = static::createAuthenticator($config['authenticator']);
 			$authorizator = static::createAuthorizator($config['authorizator']);
 
