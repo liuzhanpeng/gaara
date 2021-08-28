@@ -17,9 +17,9 @@ interface AuthenticatorInterface
 	 * 成功返回令牌，否则抛出异常
 	 *
 	 * @param UserInterface $user 用户身份
-	 * @return string|null
+	 * @return mixed
 	 */
-	function authenticate(UserInterface $user): ?string;
+	function authenticate(UserInterface $user);
 
 	/**
 	 * 判断是否已认证

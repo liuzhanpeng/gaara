@@ -2,6 +2,7 @@
 
 namespace Gaara\Authentication\Credential;
 
+use Gaara\Authentication\CredentialInterface;
 use Gaara\Authentication\Exception\InvalidCredentialException;
 use Gaara\User\UserProviderInterface;
 use Gaara\User\UserInterface;

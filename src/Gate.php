@@ -3,8 +3,8 @@
 namespace Gaara;
 
 use Gaara\Authentication\AuthenticatorInterface;
+use Gaara\Authentication\CredentialInterface;
 use Gaara\Authentication\Credential\CallbackCendential;
-use Gaara\Authentication\Credential\CredentialInterface;
 use Gaara\Authentication\Credential\GenericCendential;
 use Gaara\Authentication\Exception\InvalidCredentialException;
 use Gaara\Authorization\AuthorizatorInterface;
@@ -71,9 +71,9 @@ class Gate
 	 * 直接认证指定用户身份
 	 *
 	 * @param UserInterface $user 用户身份
-	 * @return string|null
+	 * @return mixed
 	 */
-	public function authenticate(UserInterface $user): ?string
+	public function authenticate(UserInterface $user)
 	{
 		return $this->authenticator->authenticate($user);
 	}
