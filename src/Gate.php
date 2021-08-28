@@ -3,6 +3,10 @@
 namespace Gaara;
 
 use Gaara\Authentication\AuthenticatorInterface;
+use Gaara\Authentication\Credential\CallbackCendential;
+use Gaara\Authentication\Credential\CredentialInterface;
+use Gaara\Authentication\Credential\GenericCendential;
+use Gaara\Authentication\Exception\InvalidCredentialException;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\User\UserProviderInterface;
 use Gaara\User\UserInterface;
@@ -40,8 +44,27 @@ class Gate
 		$this->authorizator = $authorizator;
 	}
 
-	public function login()
+	/**
+	 * 登录
+	 *
+	 * @param CredentialInterface|array|callable $credential 登录证书
+	 * @return mixed
+	 */
+	public function login($credential)
 	{
+		if (is_array($credential)) {
+			$credential = new GenericCendential($credential);
+		} elseif (is_callable($credential)) {
+			$credential = new CallbackCendential($credential);
+		}
+
+		if (!$credential instanceof CredentialInterface) {
+			throw new InvalidCredentialException('不支持的登录证书类型');
+		}
+
+		$user = $credential->validate($this->userProvider);
+
+		return $this->authenticator->authenticate($user);
 	}
 
 	/**
