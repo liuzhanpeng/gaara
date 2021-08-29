@@ -34,6 +34,13 @@ class Gate
 	 */
 	protected $authorizator;
 
+	/**
+	 * 构造
+	 *
+	 * @param UserProviderInterface $userProvider
+	 * @param AuthenticatorInterface $authenticator
+	 * @param AuthorizatorInterface|null $authorizator
+	 */
 	public function __construct(
 		UserProviderInterface $userProvider,
 		AuthenticatorInterface $authenticator,
