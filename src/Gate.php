@@ -14,6 +14,13 @@ use Gaara\User\UserInterface;
 class Gate
 {
 	/**
+	 * 用户提供器
+	 *
+	 * @var UserProviderInterface
+	 */
+	protected $userProvider;
+
+	/**
 	 * 认证器
 	 *
 	 * @var AuthenticatorInterface
@@ -27,17 +34,10 @@ class Gate
 	 */
 	protected $authorizator;
 
-	/**
-	 * 用户提供器
-	 *
-	 * @var UserProviderInterface
-	 */
-	protected $userProvider;
-
 	public function __construct(
 		UserProviderInterface $userProvider,
 		AuthenticatorInterface $authenticator,
-		AuthorizatorInterface $authorizator
+		?AuthorizatorInterface $authorizator = null
 	) {
 		$this->userProvider = $userProvider;
 		$this->authenticator = $authenticator;
@@ -128,6 +128,10 @@ class Gate
 	{
 		if (!$this->isAuthenticated()) {
 			return false;
+		}
+
+		if (!is_null($this->authorizator)) {
+			throw new \Exception('未设置授权器');
 		}
 
 		return $this->authorizator->isAllowed($this->user(), $resourceId);

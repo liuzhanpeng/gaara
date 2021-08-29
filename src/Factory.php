@@ -6,6 +6,7 @@ use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\Authorizator\GenericAuthorizator;
+use Gaara\Authorization\ResourceProviderInterface;
 
 /**
  * Gate工厂类
@@ -48,6 +49,13 @@ class Factory
 	 * @var array
 	 */
 	private static $authorizators = [];
+
+	/**
+	 * 创建资源提供器的callback列表
+	 *
+	 * @var array
+	 */
+	private static $resourceProviders = [];
 
 	/**
 	 * 初始化
@@ -97,6 +105,18 @@ class Factory
 	}
 
 	/**
+	 * 注册资源提供器
+	 *
+	 * @param string $driver
+	 * @param callable $callbadk
+	 * @return void
+	 */
+	public static function registerResourceProvider(string $driver, callable $callbadk)
+	{
+		static::$resourceProviders[$driver] = $callbadk;
+	}
+
+	/**
 	 * 创建Gate实例
 	 *
 	 * @param string|null $name 名称
@@ -121,10 +141,15 @@ class Factory
 
 			$userProvider = static::createUserProvider($config['user_provider']);
 			$authenticator = static::createAuthenticator($config['authenticator']);
-			if (!isset($config['authorizator'])) {
-				$authorizator = new GenericAuthorizator();
-			} else {
+			$authorizator = null;
+			if (isset($config['authorizator'])) {
 				$authorizator = static::createAuthorizator($config['authorizator']);
+				if (!isset($config['resource_provider'])) {
+					throw new \Exception(sprintf('找不到gate[%s]的resource_provider配置', $name));
+				}
+
+				$resourceProvider =  static::createResourceProvider($config['resource_provider']);
+				$authorizator->setResorceProvider($resourceProvider);
 			}
 
 			static::$gates[$name] = new Gate($userProvider, $authenticator, $authorizator);
@@ -206,5 +231,26 @@ class Factory
 		}
 
 		return $authorizator;
+	}
+
+	/**
+	 * 创建资源提供器
+	 *
+	 * @param array $config 配置
+	 * @return ResourceProviderInterface
+	 */
+	private static function createResourceProvider(array $config): ResourceProviderInterface
+	{
+		if (!isset(static::$resourceProviders[$config['driver']])) {
+			throw new \InvalidArgumentException(sprintf('找不到授权器驱动[%s]', $config['driver']));
+		}
+
+		$resourceProvider = call_user_func(static::$resourceProviders[$config['driver']], $config['params'] ?? []);
+
+		if (!$resourceProvider instanceof ResourceProviderInterface) {
+			throw new \InvalidArgumentException(sprintf('资源提供器[%s]必须实现ResourceProviderInterface', $config['driver']));
+		}
+
+		return $resourceProvider;
 	}
 }
