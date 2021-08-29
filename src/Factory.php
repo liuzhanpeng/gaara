@@ -7,11 +7,11 @@ use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\User\UserProviderInterface;
 
 /**
- * 认证授权外观类
+ * Gate工厂类
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
-class Auth
+class Factory
 {
 	/**
 	 * Gate实例列表
