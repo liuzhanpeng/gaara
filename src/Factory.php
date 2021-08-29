@@ -5,7 +5,6 @@ namespace Gaara;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
-use Gaara\Authorization\Authorizator\GenericAuthorizator;
 use Gaara\Authorization\ResourceProviderInterface;
 
 /**
