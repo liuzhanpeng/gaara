@@ -131,7 +131,7 @@ class GateManager
 		}
 
 		if (!isset($this->gates[$name])) {
-			if (!isset($config['gates'][$name])) {
+			if (!isset($this->config['gates'][$name])) {
 				throw new \Exception(sprintf('找不到gate[%s]配置', $name));
 			}
 
