@@ -2,9 +2,9 @@
 
 namespace Gaara\Authentication;
 
-use Gaara\User\UserProviderInterface;
 use Gaara\User\UserInterface;
 use Gaara\Authentication\Exception\AuthenticationException;
+use Gaara\Authentication\UserProviderInterface;
 
 /**
  * 登录凭证接口

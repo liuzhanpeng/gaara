@@ -1,6 +1,6 @@
 <?php
 
-namespace Gaara\User;
+namespace Gaara\Authentication;
 
 use Gaara\User\UserInterface;
 

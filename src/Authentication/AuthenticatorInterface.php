@@ -3,7 +3,7 @@
 namespace Gaara\Authentication;
 
 use Gaara\User\UserInterface;
-use Gaara\User\UserProviderInterface;
+use Gaara\Authentication\UserProviderInterface;
 
 /**
  * 认证器接口
@@ -39,7 +39,7 @@ interface AuthenticatorInterface
 	 * 通过上下文获取用户身份
 	 * 找不到返回null
 	 *
-	 * @param UserProviderInterface $userProvider 用户身份提供器
+	 * @param UserProviderInterface $userProvider 用户提供器
 	 * @return UserInterface|null
 	 */
 	function user(UserProviderInterface $userProvider): ?UserInterface;

@@ -4,7 +4,8 @@ namespace Gaara;
 
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
-use Gaara\User\UserProviderInterface;
+use Gaara\Authentication\UserProviderInterface;
+use Gaara\Authorization\Authorizator\GenericAuthorizator;
 
 /**
  * Gate工厂类
@@ -120,7 +121,11 @@ class Factory
 
 			$userProvider = static::createUserProvider($config['user_provider']);
 			$authenticator = static::createAuthenticator($config['authenticator']);
-			$authorizator = static::createAuthorizator($config['authorizator']);
+			if (!isset($config['authorizator'])) {
+				$authorizator = new GenericAuthorizator();
+			} else {
+				$authorizator = static::createAuthorizator($config['authorizator']);
+			}
 
 			static::$gates[$name] = new Gate($userProvider, $authenticator, $authorizator);
 		}

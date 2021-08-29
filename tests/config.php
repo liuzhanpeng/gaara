@@ -18,6 +18,10 @@ return [
 				'driver' => 'acl',
 				'params' => [],
 			],
+			'resource_provider' => [
+				'driver' => '',
+				'params' => [],
+			],
 			'event' => []
 		],
 

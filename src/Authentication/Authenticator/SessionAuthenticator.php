@@ -3,8 +3,9 @@
 namespace Gaara\Authentication\Authenticator;
 
 use Gaara\Authentication\AuthenticatorInterface;
+use Gaara\Authentication\UserProviderInterface;
+use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\User\UserInterface;
-use Gaara\User\UserProviderInterface;
 
 /**
  * 基于Session的认证器

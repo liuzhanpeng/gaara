@@ -7,19 +7,12 @@ use Gaara\Authentication\CredentialInterface;
 use Gaara\Authentication\Credential\CallbackCendential;
 use Gaara\Authentication\Credential\GenericCendential;
 use Gaara\Authentication\Exception\InvalidCredentialException;
+use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\AuthorizatorInterface;
-use Gaara\User\UserProviderInterface;
 use Gaara\User\UserInterface;
 
 class Gate
 {
-	/**
-	 * 用户身份提供器
-	 *
-	 * @var UserProviderInterface
-	 */
-	protected $userProvider;
-
 	/**
 	 * 认证器
 	 *
@@ -33,6 +26,13 @@ class Gate
 	 * @var AuthorizatorInterface
 	 */
 	protected $authorizator;
+
+	/**
+	 * 用户提供器
+	 *
+	 * @var UserProviderInterface
+	 */
+	protected $userProvider;
 
 	public function __construct(
 		UserProviderInterface $userProvider,
