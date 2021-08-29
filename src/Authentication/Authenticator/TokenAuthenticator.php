@@ -135,14 +135,14 @@ class TokenAuthenticator implements AuthenticatorInterface
 	protected function generateTokenPackage(UserInterface $user): array
 	{
 		$timestamp = time();
-		$token = bin2hex(random_bytes(128));
+		$token = bin2hex(random_bytes(64));
 		$orignStr = sprintf('%s-%s-%s', $user->id(), $timestamp, $token);
 
 		return [
 			'userId' => $user->id(),
 			'timestamp' => $timestamp,
 			'token' => $token,
-			'signature' => hash_hmac('md5', $orignStr, $this->salt),
+			'signature' => hash_hmac('sha256', $orignStr, $this->salt),
 		];
 	}
 
@@ -168,7 +168,7 @@ class TokenAuthenticator implements AuthenticatorInterface
 		}
 
 		$orignStr = sprintf('%s-%s-%s', $package['userId'], $package['timestamp'], $package['token']);
-		if (strcmp(hash_hmac('md5', $orignStr, $this->salt), $package['signature']) !== 0) {
+		if (strcmp(hash_hmac('sha256', $orignStr, $this->salt), $package['signature']) !== 0) {
 			return false;
 		}
 
