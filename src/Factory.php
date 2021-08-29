@@ -62,7 +62,7 @@ class Factory
 	 * @param array $config 配置
 	 * @return void
 	 */
-	protected static function init(array $config)
+	public static function init(array $config)
 	{
 		static::$config = $config;
 	}
