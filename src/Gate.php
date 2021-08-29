@@ -4,8 +4,8 @@ namespace Gaara;
 
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authentication\CredentialInterface;
-use Gaara\Authentication\Credential\CallbackCendential;
-use Gaara\Authentication\Credential\GenericCendential;
+use Gaara\Authentication\Credential\CallbackCrendential;
+use Gaara\Authentication\Credential\GenericCrendential;
 use Gaara\Authentication\Exception\InvalidCredentialException;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\AuthorizatorInterface;
@@ -60,9 +60,9 @@ class Gate
 	public function login($credential)
 	{
 		if (is_array($credential)) {
-			$credential = new GenericCendential($credential);
+			$credential = new GenericCrendential($credential);
 		} elseif (is_callable($credential)) {
-			$credential = new CallbackCendential($credential);
+			$credential = new CallbackCrendential($credential);
 		}
 
 		if (!$credential instanceof CredentialInterface) {

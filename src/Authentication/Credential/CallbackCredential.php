@@ -12,7 +12,7 @@ use Gaara\User\UserInterface;
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
-class CallbackCendential implements CredentialInterface
+class CallbackCrendential implements CredentialInterface
 {
 	protected $callback;
 
