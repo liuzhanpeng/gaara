@@ -15,11 +15,4 @@ interface UserInterface
 	 * @return mixed
 	 */
 	function id();
-
-	/**
-	 * 返回用户数据
-	 *
-	 * @return array|\ArrayAccess
-	 */
-	function data();
 }
