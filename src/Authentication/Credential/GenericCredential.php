@@ -12,7 +12,7 @@ use Gaara\User\UserInterface;
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
-class GenericCrendential implements CredentialInterface
+class GenericCredential implements CredentialInterface
 {
 	protected $params = [];
 
