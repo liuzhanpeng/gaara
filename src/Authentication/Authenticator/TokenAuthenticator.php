@@ -149,10 +149,15 @@ class TokenAuthenticator implements AuthenticatorInterface
 	/**
 	 * 解析令牌返回相应信息
 	 *
+	 * @param string|null $token
 	 * @return array|false
 	 */
-	protected function parseToken(string $token)
+	protected function parseToken(?string $token)
 	{
+		if (empty($token)) {
+			return false;
+		}
+
 		$jsonStr = base64_decode($token);
 		if ($jsonStr === false) {
 			return false;
@@ -187,9 +192,9 @@ class TokenAuthenticator implements AuthenticatorInterface
 	/**
 	 * 从上下文中获取Token信息
 	 *
-	 * @return string
+	 * @return string|null
 	 */
-	protected function getToken(): string
+	protected function getToken(): ?string
 	{
 		return $_SERVER[$this->tokenKey];
 	}
