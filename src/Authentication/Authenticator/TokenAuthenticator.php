@@ -135,24 +135,29 @@ class TokenAuthenticator implements AuthenticatorInterface
 	protected function generateTokenPackage(UserInterface $user): array
 	{
 		$timestamp = time();
-		$randomStr = bin2hex(random_bytes(16));
-		$orignStr = sprintf('%s-%s-%s', $user->id(), $timestamp, $randomStr);
+		$token = bin2hex(random_bytes(64));
+		$orignStr = sprintf('%s-%s-%s', $user->id(), $timestamp, $token);
 
 		return [
 			'userId' => $user->id(),
 			'timestamp' => $timestamp,
-			'randomStr' => $randomStr,
-			'token' => hash_hmac('md5', $orignStr, $this->salt),
+			'token' => $token,
+			'signature' => hash_hmac('sha256', $orignStr, $this->salt),
 		];
 	}
 
 	/**
 	 * 解析令牌返回相应信息
 	 *
+	 * @param string|null $token
 	 * @return array|false
 	 */
-	protected function parseToken(string $token)
+	protected function parseToken(?string $token)
 	{
+		if (empty($token)) {
+			return false;
+		}
+
 		$jsonStr = base64_decode($token);
 		if ($jsonStr === false) {
 			return false;
@@ -163,12 +168,12 @@ class TokenAuthenticator implements AuthenticatorInterface
 			return false;
 		}
 
-		if (!isset($package['userId']) || !isset($package['value']) || !isset($package['timestamp']) || !isset($package['signature'])) {
+		if (!isset($package['userId']) || !isset($package['timestamp']) || !isset($package['token']) || !isset($package['signature'])) {
 			return false;
 		}
 
-		$orignStr = sprintf('%s-%s-%s', $package['userId'], $package['value'], $package['timestamp']);
-		if (strcmp(hash_hmac('md5', $orignStr, $this->salt), $package['signature']) !== 0) {
+		$orignStr = sprintf('%s-%s-%s', $package['userId'], $package['timestamp'], $package['token']);
+		if (strcmp(hash_hmac('sha256', $orignStr, $this->salt), $package['signature']) !== 0) {
 			return false;
 		}
 
@@ -187,9 +192,9 @@ class TokenAuthenticator implements AuthenticatorInterface
 	/**
 	 * 从上下文中获取Token信息
 	 *
-	 * @return string
+	 * @return string|null
 	 */
-	protected function getToken(): string
+	protected function getToken(): ?string
 	{
 		return $_SERVER[$this->tokenKey];
 	}

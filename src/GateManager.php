@@ -5,66 +5,79 @@ namespace Gaara;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
+use Gaara\Authorization\Authorizator\GenericAuthorizator;
 use Gaara\Authorization\ResourceProviderInterface;
 
 /**
- * Gate工厂类
+ * Gate管理器
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
-class Factory
+class GateManager
 {
 	/**
 	 * Gate实例列表
 	 *
 	 * @var array
 	 */
-	private static $gates = [];
+	private $gates = [];
 
 	/**
 	 * 配置
 	 *
 	 * @var array
 	 */
-	private static $config = [];
+	private $config = [];
 
 	/**
 	 * 创建用户提供器的callback列表
 	 *
 	 * @var array
 	 */
-	private static $userProviders = [];
+	private $userProviders = [];
 
 	/**
 	 * 创建认证器的callback列表
 	 *
 	 * @var array
 	 */
-	private static $authenticators = [];
+	private $authenticators = [];
 
 	/**
 	 * 创建授权器的callback列表
 	 *
 	 * @var array
 	 */
-	private static $authorizators = [];
+	private $authorizators = [];
 
 	/**
 	 * 创建资源提供器的callback列表
 	 *
 	 * @var array
 	 */
-	private static $resourceProviders = [];
+	private $resourceProviders = [];
 
 	/**
 	 * 初始化
 	 *
 	 * @param array $config 配置
+	 */
+	public function __construct(array $config)
+	{
+		$this->config = $config;
+	}
+
+	/**
+	 * 初始化
+	 * 注册默认的驱动
+	 *
 	 * @return void
 	 */
-	protected static function init(array $config)
+	public function init()
 	{
-		static::$config = $config;
+		$this->registerAuthorizator('generic', function (array $params) {
+			return new GenericAuthorizator();
+		});
 	}
 
 	/**
@@ -74,9 +87,9 @@ class Factory
 	 * @param callable $callbadk
 	 * @return void
 	 */
-	public static function registerUserProvider(string $driver, callable $callbadk)
+	public function registerUserProvider(string $driver, callable $callbadk)
 	{
-		static::$userProviders[$driver] = $callbadk;
+		$this->userProviders[$driver] = $callbadk;
 	}
 
 	/**
@@ -86,9 +99,9 @@ class Factory
 	 * @param callable $callbadk
 	 * @return void
 	 */
-	public static function registerAuthenticator(string $driver, callable $callbadk)
+	public function registerAuthenticator(string $driver, callable $callbadk)
 	{
-		static::$authenticators[$driver] = $callbadk;
+		$this->authenticators[$driver] = $callbadk;
 	}
 
 	/**
@@ -98,9 +111,9 @@ class Factory
 	 * @param callable $callbadk
 	 * @return void
 	 */
-	public static function registerAuthorizator(string $driver, callable $callbadk)
+	public function registerAuthorizator(string $driver, callable $callbadk)
 	{
-		static::$authorizators[$driver] = $callbadk;
+		$this->authorizators[$driver] = $callbadk;
 	}
 
 	/**
@@ -110,9 +123,9 @@ class Factory
 	 * @param callable $callbadk
 	 * @return void
 	 */
-	public static function registerResourceProvider(string $driver, callable $callbadk)
+	public function registerResourceProvider(string $driver, callable $callbadk)
 	{
-		static::$resourceProviders[$driver] = $callbadk;
+		$this->resourceProviders[$driver] = $callbadk;
 	}
 
 	/**
@@ -121,40 +134,40 @@ class Factory
 	 * @param string|null $name 名称
 	 * @return Gate
 	 */
-	public static function make(?string $name = null): Gate
+	public function make(?string $name = null): Gate
 	{
 		if (is_null($name)) {
-			if (!isset(static::$config['default'])) {
+			if (!isset($this->config['default'])) {
 				throw new \Exception('找不到default配置项');
 			}
 
-			$name = static::$config['default'];
+			$name = $this->config['default'];
 		}
 
-		if (!isset(static::$gates[$name])) {
-			if (!isset($config['gates'][$name])) {
+		if (!isset($this->gates[$name])) {
+			if (!isset($this->config['gates'][$name])) {
 				throw new \Exception(sprintf('找不到gate[%s]配置', $name));
 			}
 
-			$config = static::$config['gates'][$name];
+			$config = $this->config['gates'][$name];
 
-			$userProvider = static::createUserProvider($config['user_provider']);
-			$authenticator = static::createAuthenticator($config['authenticator']);
+			$userProvider = $this->createUserProvider($config['user_provider']);
+			$authenticator = $this->createAuthenticator($config['authenticator']);
 			$authorizator = null;
 			if (isset($config['authorizator'])) {
-				$authorizator = static::createAuthorizator($config['authorizator']);
+				$authorizator = $this->createAuthorizator($config['authorizator']);
 				if (!isset($config['resource_provider'])) {
 					throw new \Exception(sprintf('找不到gate[%s]的resource_provider配置', $name));
 				}
 
-				$resourceProvider =  static::createResourceProvider($config['resource_provider']);
+				$resourceProvider = $this->createResourceProvider($config['resource_provider']);
 				$authorizator->setResorceProvider($resourceProvider);
 			}
 
-			static::$gates[$name] = new Gate($userProvider, $authenticator, $authorizator);
+			$this->gates[$name] = new Gate($userProvider, $authenticator, $authorizator);
 		}
 
-		return static::$gates[$name];
+		return $this->gates[$name];
 	}
 
 	/**
@@ -164,9 +177,9 @@ class Factory
 	 * @param mixed $arguments
 	 * @return mixed
 	 */
-	public static function __callStatic($name, $arguments)
+	public function __call($name, $arguments)
 	{
-		return static::make()->{$name}(...$arguments);
+		return $this->make()->{$name}(...$arguments);
 	}
 
 	/**
@@ -175,13 +188,13 @@ class Factory
 	 * @param array $config 配置
 	 * @return UserProviderInterface
 	 */
-	private static function createUserProvider(array $config): UserProviderInterface
+	private function createUserProvider(array $config): UserProviderInterface
 	{
-		if (!isset(static::$userProviders[$config['driver']])) {
+		if (!isset($this->userProviders[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到用户身份提供器驱动[%s]', $config['driver']));
 		}
 
-		$userProvider = call_user_func(static::$userProviders[$config['driver']], $config['params'] ?? []);
+		$userProvider = call_user_func($this->userProviders[$config['driver']], $config['params'] ?? []);
 
 		if (!$userProvider instanceof UserProviderInterface) {
 			throw new \InvalidArgumentException(sprintf('用户身份对象提供器[%s]必须实现UserProviderInterface', $config['driver']));
@@ -196,13 +209,13 @@ class Factory
 	 * @param array $config 配置
 	 * @return AuthenticatorInterface
 	 */
-	private static function createAuthenticator(array $config): AuthenticatorInterface
+	private function createAuthenticator(array $config): AuthenticatorInterface
 	{
-		if (!isset(static::$authenticators[$config['driver']])) {
+		if (!isset($this->authenticators[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到认证器驱动[%s]', $config['driver']));
 		}
 
-		$authenticator = call_user_func(static::$authenticators[$config['driver']], $config['params'] ?? []);
+		$authenticator = call_user_func($this->authenticators[$config['driver']], $config['params'] ?? []);
 
 		if (!$authenticator instanceof AuthenticatorInterface) {
 			throw new \InvalidArgumentException(sprintf('认证器[%s]必须实现AuthenticatorInterface', $config['driver']));
@@ -217,13 +230,13 @@ class Factory
 	 * @param array $config 配置
 	 * @return AuthorizatorInterface
 	 */
-	private static function createAuthorizator(array $config): AuthorizatorInterface
+	private function createAuthorizator(array $config): AuthorizatorInterface
 	{
-		if (!isset(static::$authorizators[$config['driver']])) {
+		if (!isset($this->authorizators[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到授权器驱动[%s]', $config['driver']));
 		}
 
-		$authorizator = call_user_func(static::$authorizators[$config['driver']], $config['params'] ?? []);
+		$authorizator = call_user_func($this->authorizators[$config['driver']], $config['params'] ?? []);
 
 		if (!$authorizator instanceof AuthorizatorInterface) {
 			throw new \InvalidArgumentException(sprintf('授权器[%s]必须实现AuthorizatorInterface', $config['driver']));
@@ -238,13 +251,13 @@ class Factory
 	 * @param array $config 配置
 	 * @return ResourceProviderInterface
 	 */
-	private static function createResourceProvider(array $config): ResourceProviderInterface
+	private function createResourceProvider(array $config): ResourceProviderInterface
 	{
-		if (!isset(static::$resourceProviders[$config['driver']])) {
+		if (!isset($this->resourceProviders[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到授权器驱动[%s]', $config['driver']));
 		}
 
-		$resourceProvider = call_user_func(static::$resourceProviders[$config['driver']], $config['params'] ?? []);
+		$resourceProvider = call_user_func($this->resourceProviders[$config['driver']], $config['params'] ?? []);
 
 		if (!$resourceProvider instanceof ResourceProviderInterface) {
 			throw new \InvalidArgumentException(sprintf('资源提供器[%s]必须实现ResourceProviderInterface', $config['driver']));
