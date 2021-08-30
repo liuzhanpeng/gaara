@@ -94,6 +94,7 @@ class GateManager
 		$this->registerCredentialValidator('username_password', function (array $params) {
 			$passwordKey = $params['passwordKey'] ?? 'password';
 			if (!isset($params['passwordHasher']) || $params['passwordHasher'] instanceof PasswordHasherInterface) {
+				throw new \Exception('配置项passwordHasher必须是实现PasswordHasherInterface接口的实例');
 			}
 			return new UsernamePasswordCredentialValidator($passwordKey, $params['passwordHasher']);
 		});
