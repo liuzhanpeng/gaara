@@ -7,18 +7,19 @@ use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\Authentication\UserProviderInterface;
 
 /**
- * 登录凭证接口
+ * 登录凭证验证器接口
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
-interface CredentialInterface
+interface CredentialValidatorInterface
 {
 	/**
 	 * 验证是否合法
 	 *
+	 * @param array|callable $credential 登录凭证
 	 * @param UserProviderInterface $userProvider
 	 * @return UserInterface
 	 * @throws AuthenticationException
 	 */
-	function validate(UserProviderInterface $userProvider): UserInterface;
+	function validate($credential, UserProviderInterface $userProvider): UserInterface;
 }
