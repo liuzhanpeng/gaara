@@ -5,6 +5,7 @@ namespace Gaara;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
+use Gaara\Authorization\Authorizator\GenericAuthorizator;
 use Gaara\Authorization\ResourceProviderInterface;
 
 /**
@@ -64,6 +65,19 @@ class GateManager
 	public function __construct(array $config)
 	{
 		$this->config = $config;
+	}
+
+	/**
+	 * 初始化
+	 * 注册默认的驱动
+	 *
+	 * @return void
+	 */
+	public function init()
+	{
+		$this->registerAuthorizator('generic', function (array $params) {
+			return new GenericAuthorizator();
+		});
 	}
 
 	/**
