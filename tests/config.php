@@ -14,6 +14,10 @@ return [
 				'driver' => 'session',
 				'params' => [],
 			],
+			'credential_validator' => [
+				'driver' => 'generic',
+				'params' => [],
+			],
 			'authorizator' => [
 				'driver' => 'acl',
 				'params' => [],
