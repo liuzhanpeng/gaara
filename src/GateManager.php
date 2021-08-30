@@ -3,6 +3,11 @@
 namespace Gaara;
 
 use Gaara\Authentication\AuthenticatorInterface;
+use Gaara\Authentication\CredentialValidator\CallbackCredentialValidator;
+use Gaara\Authentication\CredentialValidator\GenericCredentialValidator;
+use Gaara\Authentication\CredentialValidator\PasswordHasherInterface;
+use Gaara\Authentication\CredentialValidator\UsernamePasswordCredentialValidator;
+use Gaara\Authentication\CredentialValidatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\Authorizator\GenericAuthorizator;
@@ -44,6 +49,13 @@ class GateManager
 	private $authenticators = [];
 
 	/**
+	 * 创建登录凭证验证器的callback列表
+	 *
+	 * @var array
+	 */
+	private $credentialValidators = [];
+
+	/**
 	 * 创建授权器的callback列表
 	 *
 	 * @var array
@@ -75,6 +87,21 @@ class GateManager
 	 */
 	public function init()
 	{
+		$this->registerCredentialValidator('generic', function (array $params) {
+			return new GenericCredentialValidator();
+		});
+
+		$this->registerCredentialValidator('username_password', function (array $params) {
+			$passwordKey = $params['passwordKey'] ?? 'password';
+			if (!isset($params['passwordHasher']) || $params['passwordHasher'] instanceof PasswordHasherInterface) {
+			}
+			return new UsernamePasswordCredentialValidator($passwordKey, $params['passwordHasher']);
+		});
+
+		$this->registerCredentialValidator('callback', function (array $params) {
+			return new CallbackCredentialValidator();
+		});
+
 		$this->registerAuthorizator('generic', function (array $params) {
 			return new GenericAuthorizator();
 		});
@@ -102,6 +129,18 @@ class GateManager
 	public function registerAuthenticator(string $driver, callable $callbadk)
 	{
 		$this->authenticators[$driver] = $callbadk;
+	}
+
+	/**
+	 * 注册登录凭证验证器
+	 *
+	 * @param string $driver
+	 * @param callable $callbadk
+	 * @return void
+	 */
+	public function registerCredentialValidator(string $driver, callable $callbadk)
+	{
+		$this->credentialValidators[$driver] = $callbadk;
 	}
 
 	/**
@@ -153,6 +192,7 @@ class GateManager
 
 			$userProvider = $this->createUserProvider($config['user_provider']);
 			$authenticator = $this->createAuthenticator($config['authenticator']);
+			$credentialValidator = $this->createCredentialValidator($config['credential_validator']);
 			$authorizator = null;
 			if (isset($config['authorizator'])) {
 				$authorizator = $this->createAuthorizator($config['authorizator']);
@@ -164,7 +204,7 @@ class GateManager
 				$authorizator->setResorceProvider($resourceProvider);
 			}
 
-			$this->gates[$name] = new Gate($userProvider, $authenticator, $authorizator);
+			$this->gates[$name] = new Gate($userProvider, $authenticator, $credentialValidator, $authorizator);
 		}
 
 		return $this->gates[$name];
@@ -222,6 +262,27 @@ class GateManager
 		}
 
 		return $authenticator;
+	}
+
+	/**
+	 * 创建登录凭证验证器
+	 *
+	 * @param array $config 配置
+	 * @return AuthenticatorInterface
+	 */
+	private function createCredentialValidator(array $config): CredentialValidatorInterface
+	{
+		if (!isset($this->credentialValidators[$config['driver']])) {
+			throw new \InvalidArgumentException(sprintf('找不到登录凭证验证器驱动[%s]', $config['driver']));
+		}
+
+		$credentialValidator = call_user_func($this->credentialValidators[$config['driver']], $config['params'] ?? []);
+
+		if (!$credentialValidator instanceof CredentialValidatorInterface) {
+			throw new \InvalidArgumentException(sprintf('登录凭证验证器[%s]必须实现CredentialValidatorInterface', $config['driver']));
+		}
+
+		return $credentialValidator;
 	}
 
 	/**
