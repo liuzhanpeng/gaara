@@ -17,6 +17,7 @@ use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\Authorizator\GenericAuthorizator;
 use Gaara\Authorization\Authorizator\OnceTokenAuthenticator;
 use Gaara\Authorization\ResourceProviderInterface;
+use PhpParser\ErrorHandler\Throwing;
 use Psr\Container\ContainerInterface;
 use Psr\SimpleCache\CacheInterface;
 
@@ -104,7 +105,10 @@ class GateManager
 		$this->registerAuthenticator('session', function (array $params, ?ContainerInterface $container) {
 			$sessionKey = $params['session_key'] ?? 'user';
 			$mode = $params['mode'] ?? SessionAuthenticator::MODE_ONLY_ID;
-			if (!isset($params['session']) && !is_null($container)) {
+			if (!isset($params['session'])) {
+				if (is_null($container)) {
+					throw new \Exception('未设置DI容器，自动获取Session类失败');
+				}
 				$session = $container->get(SessionInterface::class);
 			} else {
 				$session = $params['session'];
@@ -127,7 +131,10 @@ class GateManager
 			}
 			$salt = $params['salt'];
 			$timeout = $params['timeout'] ?? 60 * 30;
-			if (!isset($params['token_fetcher']) && !is_null($container)) {
+			if (!isset($params['token_fetcher'])) {
+				if (is_null($container)) {
+					throw new \Exception('未设置DI容器，自动获取TokenFetcher类失败');
+				}
 				$tokenFetcher = $container->get(TokenFetcherInterface::class);
 			} else {
 				$tokenFetcher = $params['token_fetcher'];
@@ -140,7 +147,10 @@ class GateManager
 				throw new \Exception('TokenAuthenticator认证器配置项token_fetcher必须是实现TokenFetcherInterface的实例或callable类型');
 			}
 
-			if (!isset($params['cache']) && !is_null($container)) {
+			if (!isset($params['cache'])) {
+				if (is_null($container)) {
+					throw new \Exception('未设置DI容器，自动获取Cache类失败');
+				}
 				$cache = $container->get(CacheInterface::class);
 			} else {
 				$cache = $params['cache'];
@@ -159,7 +169,10 @@ class GateManager
 		$this->registerAuthenticator('once_token', function (array $params, ?ContainerInterface $container) {
 			$tokenKey = $params['token_key'] ?? 'token';
 			$expire = $params['expire'] ?? 60 * 5;
-			if (!isset($params['cache']) && !is_null($container)) {
+			if (!isset($params['cache'])) {
+				if (is_null($container)) {
+					throw new \Exception('未设置DI容器，自动获取Cache类失败');
+				}
 				$cache = $container->get(CacheInterface::class);
 			} else {
 				$cache = $params['cache'];
@@ -181,7 +194,10 @@ class GateManager
 
 		$this->registerCredentialValidator('username_password', function (array $params, ?ContainerInterface $container) {
 			$passwordKey = $params['password_key'] ?? 'password';
-			if (!isset($params['password_hasher']) && !is_null($container)) {
+			if (!isset($params['password_hasher'])) {
+				if (is_null($container)) {
+					throw new \Exception('未设置DI容器，自动获取PasswordHasher类失败');
+				}
 				$passwordHasher = $container->get(PasswordHasherInterface::class);
 			} else {
 				$passwordHasher = $params['password_hasher'];
