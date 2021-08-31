@@ -144,14 +144,14 @@ class TokenAuthenticator implements AuthenticatorInterface
 	protected function generateTokenPackage(UserInterface $user): array
 	{
 		$timestamp = time();
-		$token = bin2hex(random_bytes(64));
-		$orignStr = sprintf('%s-%s-%s', $user->id(), $timestamp, $token);
+		$token = bin2hex(random_bytes(32));
+		$orignStr = sprintf('%s.%s.%s', $user->id(), $timestamp, $token);
 
 		return [
 			'userId' => $user->id(),
 			'timestamp' => $timestamp,
 			'token' => $token,
-			'signature' => hash_hmac('sha256', $orignStr, $this->salt),
+			'sign' => hash_hmac('sha256', $orignStr, $this->salt),
 		];
 	}
 
@@ -173,25 +173,23 @@ class TokenAuthenticator implements AuthenticatorInterface
 		}
 
 		$package = json_decode($jsonStr, true);
-		if (is_null($package)) {
+		if (
+			is_null($package)
+			|| !isset($package['userId'])
+			|| !isset($package['timestamp'])
+			|| !isset($package['token'])
+			|| !isset($package['sign'])
+		) {
 			return false;
 		}
 
-		if (!isset($package['userId']) || !isset($package['timestamp']) || !isset($package['token']) || !isset($package['signature'])) {
-			return false;
-		}
-
-		$orignStr = sprintf('%s-%s-%s', $package['userId'], $package['timestamp'], $package['token']);
-		if (strcmp(hash_hmac('sha256', $orignStr, $this->salt), $package['signature']) !== 0) {
+		$orignStr = sprintf('%s.%s.%s', $package['userId'], $package['timestamp'], $package['token']);
+		if (strcmp(hash_hmac('sha256', $orignStr, $this->salt), $package['sign']) !== 0) {
 			return false;
 		}
 
 		$token = $this->cache->get($this->getCacheKey($package['userId']));
-		if (empty($token)) {
-			return false;
-		}
-
-		if (strcmp($token, $package['token']) !== 0) {
+		if (empty($token) || strcmp($token, $package['token']) !== 0) {
 			return false;
 		}
 
