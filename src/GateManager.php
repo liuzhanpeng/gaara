@@ -207,7 +207,7 @@ class GateManager
 			}
 
 			if ($passwordHasher instanceof PasswordHasherInterface || is_callable($passwordHasher)) {
-				return new UsernamePasswordCredentialValidator($passwordKey, $params['password_hasher']);
+				return new UsernamePasswordCredentialValidator($passwordKey, $passwordHasher);
 			}
 
 			throw new \Exception('配置项password_hasher必须是实现PasswordHasherInterface接口的实例或callable类型');
