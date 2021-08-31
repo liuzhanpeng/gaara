@@ -29,7 +29,13 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 	 */
 	protected $passwordHasher;
 
-	public function __construct(string $passwordKey, PasswordHasherInterface $passwordHasher)
+	/**
+	 * 构造
+	 *
+	 * @param string $passwordKey 密码在凭证数组中的key
+	 * @param PasswordHasherInterface|callable $passwordHasher
+	 */
+	public function __construct(string $passwordKey, $passwordHasher)
 	{
 		$this->passwordKey = $passwordKey;
 		$this->passwordHasher = $passwordHasher;
@@ -43,6 +49,9 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 		if (!is_array($credential)) {
 			throw new InvalidCredentialException('登录凭证必须是数组类型');
 		}
+		if (!isset($credential[$this->passwordKey])) {
+			throw new InvalidCredentialException(sprintf('登录凭证没找到密码项[%s]', $this->passwordKey));
+		}
 
 		$user = $userProvider->findByParams($this->params);
 
@@ -50,8 +59,17 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 			throw new AuthenticationException('用户身份对象必须实现PasswordInterface接口');
 		}
 
-		if (!$this->passwordHasher->verify($user->password(), $this->params[$this->passwordKey])) {
-			throw new InvalidCredentialException('密码错误');
+		if ($this->passwordHasher instanceof PasswordHasherInterface) {
+			if (!$this->passwordHasher->verify($user->password(), $this->params[$this->passwordKey])) {
+				throw new InvalidCredentialException('密码错误');
+			}
+		} elseif (is_callable($this->passwordHasher)) {
+			$result = call_user_func($this->passwordHasher, $user->password(), $this->params[$this->passwordKey]);
+			if ($result !== true) {
+				throw new InvalidCredentialException('密码错误');
+			}
+		} else {
+			throw new AuthenticationException('不支持的PasswordHasher类型');
 		}
 
 		return $user;
