@@ -53,7 +53,7 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 			throw new InvalidCredentialException(sprintf('登录凭证没找到密码项[%s]', $this->passwordKey));
 		}
 
-		$user = $userProvider->findByParams($this->params);
+		$user = $userProvider->findByParams($credential);
 
 		if (!$user instanceof PasswordInterface) {
 			throw new AuthenticationException('用户身份对象必须实现PasswordInterface接口');
