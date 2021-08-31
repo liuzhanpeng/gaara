@@ -25,7 +25,7 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 	/**
 	 * password hasher
 	 *
-	 * @var PasswordHasherInterfacer
+	 * @var PasswordHasherInterfacer|callable
 	 */
 	protected $passwordHasher;
 

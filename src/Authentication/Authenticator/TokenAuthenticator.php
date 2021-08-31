@@ -3,8 +3,8 @@
 namespace Gaara\Authentication\Authenticator;
 
 use Gaara\Authentication\AuthenticatorInterface;
+use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\Authentication\UserProviderInterface;
-use Gaara\Authorization\Exception\AuthorizationException;
 use Gaara\User\UserInterface;
 use Psr\SimpleCache\CacheInterface;
 
@@ -37,6 +37,13 @@ class TokenAuthenticator implements AuthenticatorInterface
 	protected $timeout;
 
 	/**
+	 * 令牌获取器
+	 *
+	 * @var TokenFetcherInterface|callable
+	 */
+	protected $tokenFetcher;
+
+	/**
 	 * 缓存实例
 	 *
 	 * @var CacheInterface
@@ -49,13 +56,15 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 * @param string $tokenKey 令牌key
 	 * @param string $salt 加密盐
 	 * @param integer $timeout 令牌超时时间
+	 * @param TokenFetcherInterface|callable $tokenFetcher 令牌获取器
 	 * @param CacheInterface $cache 缓存实例
 	 */
-	public function __construct(string $tokenKey, string $salt, int $timeout, CacheInterface $cache)
+	public function __construct(string $tokenKey, string $salt, int $timeout, $tokenFetcher, CacheInterface $cache)
 	{
 		$this->tokenKey = $tokenKey;
 		$this->salt = $salt;
 		$this->timeout = $timeout;
+		$this->tokenFetcher = $tokenFetcher;
 		$this->cache = $cache;
 	}
 
@@ -194,9 +203,15 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 *
 	 * @return string|null
 	 */
-	protected function getToken(): ?string
+	private function getToken(): ?string
 	{
-		return $_SERVER[$this->tokenKey];
+		if ($this->tokenFetcher instanceof TokenFetcherInterface) {
+			return $this->tokenFetcher->token($this->tokenKey);
+		} elseif (is_callable($this->tokenFetcher)) {
+			return call_user_func($this->tokenFetcher, $this->tokenKey);
+		} else {
+			throw new AuthenticationException('不支持的TokenFetcher类型');
+		}
 	}
 
 	/**
