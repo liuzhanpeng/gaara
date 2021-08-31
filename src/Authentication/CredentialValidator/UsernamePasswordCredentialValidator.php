@@ -53,6 +53,9 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 			throw new InvalidCredentialException(sprintf('登录凭证没找到密码项[%s]', $this->passwordKey));
 		}
 
+		$password = $credential[$this->passwordKey];
+		unset($credential[$this->passwordKey]);
+
 		$user = $userProvider->findByParams($credential);
 		if (is_null($user)) {
 			throw new InvalidCredentialException('无效登录凭证');
@@ -63,11 +66,11 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 		}
 
 		if ($this->passwordHasher instanceof PasswordHasherInterface) {
-			if (!$this->passwordHasher->verify($user->password(), $this->params[$this->passwordKey])) {
+			if (!$this->passwordHasher->verify($user->password(), $password)) {
 				throw new InvalidCredentialException('密码错误');
 			}
 		} elseif (is_callable($this->passwordHasher)) {
-			$result = call_user_func($this->passwordHasher, $user->password(), $this->params[$this->passwordKey]);
+			$result = call_user_func($this->passwordHasher, $user->password(), $password);
 			if ($result !== true) {
 				throw new InvalidCredentialException('密码错误');
 			}
