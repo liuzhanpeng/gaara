@@ -203,7 +203,7 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 *
 	 * @return string|null
 	 */
-	private function getToken(): ?string
+	protected function getToken(): ?string
 	{
 		if ($this->tokenFetcher instanceof TokenFetcherInterface) {
 			return $this->tokenFetcher->token($this->tokenKey);
