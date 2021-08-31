@@ -3,13 +3,11 @@
 namespace Gaara;
 
 use Gaara\Authentication\AuthenticatorInterface;
-use Gaara\Authentication\CredentialInterface;
-use Gaara\Authentication\Credential\CallbackCredential;
-use Gaara\Authentication\Credential\GenericCredential;
-use Gaara\Authentication\Exception\InvalidCredentialException;
+use Gaara\Authentication\CredentialValidatorInterface;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\User\UserInterface;
+use Gaara\Authentication\Exception\AuthenticationException;
 
 class Gate
 {
@@ -28,6 +26,13 @@ class Gate
 	protected $authenticator;
 
 	/**
+	 * 登录凭证验证器
+	 *
+	 * @var CredentialValidatorInterface
+	 */
+	protected $credentialValidator;
+
+	/**
 	 * 授权器
 	 *
 	 * @var AuthorizatorInterface
@@ -39,37 +44,31 @@ class Gate
 	 *
 	 * @param UserProviderInterface $userProvider
 	 * @param AuthenticatorInterface $authenticator
+	 * @param CredentialValidatorInterface $credentialValidator
 	 * @param AuthorizatorInterface|null $authorizator
 	 */
 	public function __construct(
 		UserProviderInterface $userProvider,
 		AuthenticatorInterface $authenticator,
+		CredentialValidatorInterface $credentialValidator,
 		?AuthorizatorInterface $authorizator = null
 	) {
 		$this->userProvider = $userProvider;
 		$this->authenticator = $authenticator;
+		$this->credentialValidator = $credentialValidator;
 		$this->authorizator = $authorizator;
 	}
 
 	/**
 	 * 登录
 	 *
-	 * @param CredentialInterface|array|callable $credential 登录证书
+	 * @param array|callable $credential 登录凭证
 	 * @return mixed
+	 * @throws AuthenticationException
 	 */
 	public function login($credential)
 	{
-		if (is_array($credential)) {
-			$credential = new GenericCredential($credential);
-		} elseif (is_callable($credential)) {
-			$credential = new CallbackCredential($credential);
-		}
-
-		if (!$credential instanceof CredentialInterface) {
-			throw new InvalidCredentialException('不支持的登录证书类型');
-		}
-
-		$user = $credential->validate($this->userProvider);
+		$user = $this->credentialValidator->validate($credential, $this->userProvider);
 
 		return $this->authenticator->authenticate($user);
 	}
@@ -98,9 +97,9 @@ class Gate
 	/**
 	 * 返回用户身份, 未认证返回null
 	 *
-	 * @return UserInterface|null
+	 * @return mixed
 	 */
-	public function user(): ?UserInterface
+	public function user()
 	{
 		return $this->authenticator->user($this->userProvider);
 	}
@@ -130,6 +129,7 @@ class Gate
 	 *
 	 * @param mixed $resourceId
 	 * @return boolean
+	 * @throws \Exception
 	 */
 	public function isAllowed($resourceId): bool
 	{
