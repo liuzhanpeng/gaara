@@ -14,7 +14,7 @@ use Gaara\Authentication\UserProviderInterface;
 interface CredentialValidatorInterface
 {
 	/**
-	 * 验证是否合法
+	 * 验证凭证是否合法, 合法返回用户身份，否则抛出异常
 	 *
 	 * @param array|callable $credential 登录凭证
 	 * @param UserProviderInterface $userProvider

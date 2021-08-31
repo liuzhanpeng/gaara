@@ -3,14 +3,11 @@
 namespace Gaara;
 
 use Gaara\Authentication\AuthenticatorInterface;
-use Gaara\Authentication\CredentialInterface;
-use Gaara\Authentication\Credential\CallbackCredential;
-use Gaara\Authentication\Credential\GenericCredential;
 use Gaara\Authentication\CredentialValidatorInterface;
-use Gaara\Authentication\Exception\InvalidCredentialException;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\User\UserInterface;
+use Gaara\Authentication\Exception\AuthenticationException;
 
 class Gate
 {
@@ -67,6 +64,7 @@ class Gate
 	 *
 	 * @param array|callable $credential 登录凭证
 	 * @return mixed
+	 * @throws AuthenticationException
 	 */
 	public function login($credential)
 	{
@@ -99,9 +97,9 @@ class Gate
 	/**
 	 * 返回用户身份, 未认证返回null
 	 *
-	 * @return UserInterface|null
+	 * @return mixed
 	 */
-	public function user(): ?UserInterface
+	public function user()
 	{
 		return $this->authenticator->user($this->userProvider);
 	}
@@ -131,6 +129,7 @@ class Gate
 	 *
 	 * @param mixed $resourceId
 	 * @return boolean
+	 * @throws \Exception
 	 */
 	public function isAllowed($resourceId): bool
 	{

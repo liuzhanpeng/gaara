@@ -3,8 +3,8 @@
 namespace Gaara\Authentication\Authenticator;
 
 use Gaara\Authentication\AuthenticatorInterface;
+use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\Authentication\UserProviderInterface;
-use Gaara\Authorization\Exception\AuthorizationException;
 use Gaara\User\UserInterface;
 use Psr\SimpleCache\CacheInterface;
 
@@ -37,6 +37,13 @@ class TokenAuthenticator implements AuthenticatorInterface
 	protected $timeout;
 
 	/**
+	 * 令牌获取器
+	 *
+	 * @var TokenFetcherInterface|callable
+	 */
+	protected $tokenFetcher;
+
+	/**
 	 * 缓存实例
 	 *
 	 * @var CacheInterface
@@ -49,13 +56,15 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 * @param string $tokenKey 令牌key
 	 * @param string $salt 加密盐
 	 * @param integer $timeout 令牌超时时间
+	 * @param TokenFetcherInterface|callable $tokenFetcher 令牌获取器
 	 * @param CacheInterface $cache 缓存实例
 	 */
-	public function __construct(string $tokenKey, string $salt, int $timeout, CacheInterface $cache)
+	public function __construct(string $tokenKey, string $salt, int $timeout, $tokenFetcher, CacheInterface $cache)
 	{
 		$this->tokenKey = $tokenKey;
 		$this->salt = $salt;
 		$this->timeout = $timeout;
+		$this->tokenFetcher = $tokenFetcher;
 		$this->cache = $cache;
 	}
 
@@ -135,14 +144,14 @@ class TokenAuthenticator implements AuthenticatorInterface
 	protected function generateTokenPackage(UserInterface $user): array
 	{
 		$timestamp = time();
-		$token = bin2hex(random_bytes(64));
-		$orignStr = sprintf('%s-%s-%s', $user->id(), $timestamp, $token);
+		$token = bin2hex(random_bytes(32));
+		$orignStr = sprintf('%s.%s.%s', $user->id(), $timestamp, $token);
 
 		return [
 			'userId' => $user->id(),
 			'timestamp' => $timestamp,
 			'token' => $token,
-			'signature' => hash_hmac('sha256', $orignStr, $this->salt),
+			'sign' => hash_hmac('sha256', $orignStr, $this->salt),
 		];
 	}
 
@@ -164,25 +173,23 @@ class TokenAuthenticator implements AuthenticatorInterface
 		}
 
 		$package = json_decode($jsonStr, true);
-		if (is_null($package)) {
+		if (
+			is_null($package)
+			|| !isset($package['userId'])
+			|| !isset($package['timestamp'])
+			|| !isset($package['token'])
+			|| !isset($package['sign'])
+		) {
 			return false;
 		}
 
-		if (!isset($package['userId']) || !isset($package['timestamp']) || !isset($package['token']) || !isset($package['signature'])) {
-			return false;
-		}
-
-		$orignStr = sprintf('%s-%s-%s', $package['userId'], $package['timestamp'], $package['token']);
-		if (strcmp(hash_hmac('sha256', $orignStr, $this->salt), $package['signature']) !== 0) {
+		$orignStr = sprintf('%s.%s.%s', $package['userId'], $package['timestamp'], $package['token']);
+		if (strcmp(hash_hmac('sha256', $orignStr, $this->salt), $package['sign']) !== 0) {
 			return false;
 		}
 
 		$token = $this->cache->get($this->getCacheKey($package['userId']));
-		if (empty($token)) {
-			return false;
-		}
-
-		if (strcmp($token, $package['token']) !== 0) {
+		if (empty($token) || strcmp($token, $package['token']) !== 0) {
 			return false;
 		}
 
@@ -196,7 +203,13 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 */
 	protected function getToken(): ?string
 	{
-		return $_SERVER[$this->tokenKey];
+		if ($this->tokenFetcher instanceof TokenFetcherInterface) {
+			return $this->tokenFetcher->token($this->tokenKey);
+		} elseif (is_callable($this->tokenFetcher)) {
+			return call_user_func($this->tokenFetcher, $this->tokenKey);
+		} else {
+			throw new AuthenticationException('不支持的TokenFetcher类型');
+		}
 	}
 
 	/**

@@ -12,6 +12,7 @@ use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\Authorizator\GenericAuthorizator;
 use Gaara\Authorization\ResourceProviderInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Gate管理器
@@ -33,6 +34,13 @@ class GateManager
 	 * @var array
 	 */
 	private $config = [];
+
+	/**
+	 * DI容器
+	 *
+	 * @var ContainerInterface
+	 */
+	private $container;
 
 	/**
 	 * 创建用户提供器的callback列表
@@ -87,11 +95,11 @@ class GateManager
 	 */
 	public function init()
 	{
-		$this->registerCredentialValidator('generic', function (array $params) {
+		$this->registerCredentialValidator('generic', function (array $params, ?ContainerInterface $container) {
 			return new GenericCredentialValidator();
 		});
 
-		$this->registerCredentialValidator('username_password', function (array $params) {
+		$this->registerCredentialValidator('username_password', function (array $params, ?ContainerInterface $container) {
 			$passwordKey = $params['password_key'] ?? 'password';
 			if (!isset($params['password_hasher']) || !$params['password_hasher'] instanceof PasswordHasherInterface) {
 				throw new \Exception('配置项password_hasher必须是实现PasswordHasherInterface接口的实例');
@@ -99,13 +107,24 @@ class GateManager
 			return new UsernamePasswordCredentialValidator($passwordKey, $params['passwordHasher']);
 		});
 
-		$this->registerCredentialValidator('callback', function (array $params) {
+		$this->registerCredentialValidator('callback', function (array $params, ?ContainerInterface $container) {
 			return new CallbackCredentialValidator();
 		});
 
-		$this->registerAuthorizator('generic', function (array $params) {
+		$this->registerAuthorizator('generic', function (array $params, ?ContainerInterface $container) {
 			return new GenericAuthorizator();
 		});
+	}
+
+	/**
+	 * 设置DI容器
+	 *
+	 * @param ContainerInterface|null $container
+	 * @return void
+	 */
+	public function setContainer(?ContainerInterface $container = null)
+	{
+		$this->container = $container;
 	}
 
 	/**
@@ -191,17 +210,17 @@ class GateManager
 
 			$config = $this->config['gates'][$name];
 
-			$userProvider = $this->createUserProvider($config['user_provider']);
-			$authenticator = $this->createAuthenticator($config['authenticator']);
-			$credentialValidator = $this->createCredentialValidator($config['credential_validator']);
+			$userProvider = $this->createUserProvider($config['user_provider'], $this->container);
+			$authenticator = $this->createAuthenticator($config['authenticator'], $this->container);
+			$credentialValidator = $this->createCredentialValidator($config['credential_validator'], $this->container);
 			$authorizator = null;
 			if (isset($config['authorizator'])) {
-				$authorizator = $this->createAuthorizator($config['authorizator']);
+				$authorizator = $this->createAuthorizator($config['authorizator'], $this->container);
 				if (!isset($config['resource_provider'])) {
 					throw new \Exception(sprintf('找不到gate[%s]的resource_provider配置', $name));
 				}
 
-				$resourceProvider = $this->createResourceProvider($config['resource_provider']);
+				$resourceProvider = $this->createResourceProvider($config['resource_provider'], $this->container);
 				$authorizator->setResorceProvider($resourceProvider);
 			}
 
@@ -227,15 +246,16 @@ class GateManager
 	 * 创建用户提供器实例
 	 *
 	 * @param array $config 配置
+	 * @param ContainerInterface|null $container DI容器
 	 * @return UserProviderInterface
 	 */
-	private function createUserProvider(array $config): UserProviderInterface
+	private function createUserProvider(array $config, ?ContainerInterface $container): UserProviderInterface
 	{
 		if (!isset($this->userProviders[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到用户身份提供器驱动[%s]', $config['driver']));
 		}
 
-		$userProvider = call_user_func($this->userProviders[$config['driver']], $config['params'] ?? []);
+		$userProvider = call_user_func($this->userProviders[$config['driver']], $config['params'] ?? [], $container);
 
 		if (!$userProvider instanceof UserProviderInterface) {
 			throw new \InvalidArgumentException(sprintf('用户身份对象提供器[%s]必须实现UserProviderInterface', $config['driver']));
@@ -248,15 +268,16 @@ class GateManager
 	 * 创建认证器
 	 *
 	 * @param array $config 配置
+	 * @param ContainerInterface|null $container DI容器
 	 * @return AuthenticatorInterface
 	 */
-	private function createAuthenticator(array $config): AuthenticatorInterface
+	private function createAuthenticator(array $config, ?ContainerInterface $container): AuthenticatorInterface
 	{
 		if (!isset($this->authenticators[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到认证器驱动[%s]', $config['driver']));
 		}
 
-		$authenticator = call_user_func($this->authenticators[$config['driver']], $config['params'] ?? []);
+		$authenticator = call_user_func($this->authenticators[$config['driver']], $config['params'] ?? [], $container);
 
 		if (!$authenticator instanceof AuthenticatorInterface) {
 			throw new \InvalidArgumentException(sprintf('认证器[%s]必须实现AuthenticatorInterface', $config['driver']));
@@ -269,15 +290,16 @@ class GateManager
 	 * 创建登录凭证验证器
 	 *
 	 * @param array $config 配置
+	 * @param ContainerInterface|null $container DI容器
 	 * @return AuthenticatorInterface
 	 */
-	private function createCredentialValidator(array $config): CredentialValidatorInterface
+	private function createCredentialValidator(array $config, ?ContainerInterface $container): CredentialValidatorInterface
 	{
 		if (!isset($this->credentialValidators[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到登录凭证验证器驱动[%s]', $config['driver']));
 		}
 
-		$credentialValidator = call_user_func($this->credentialValidators[$config['driver']], $config['params'] ?? []);
+		$credentialValidator = call_user_func($this->credentialValidators[$config['driver']], $config['params'] ?? [], $container);
 
 		if (!$credentialValidator instanceof CredentialValidatorInterface) {
 			throw new \InvalidArgumentException(sprintf('登录凭证验证器[%s]必须实现CredentialValidatorInterface', $config['driver']));
@@ -290,15 +312,16 @@ class GateManager
 	 * 创建授权器
 	 *
 	 * @param array $config 配置
+	 * @param ContainerInterface|null $container DI容器
 	 * @return AuthorizatorInterface
 	 */
-	private function createAuthorizator(array $config): AuthorizatorInterface
+	private function createAuthorizator(array $config, ?ContainerInterface $container): AuthorizatorInterface
 	{
 		if (!isset($this->authorizators[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到授权器驱动[%s]', $config['driver']));
 		}
 
-		$authorizator = call_user_func($this->authorizators[$config['driver']], $config['params'] ?? []);
+		$authorizator = call_user_func($this->authorizators[$config['driver']], $config['params'] ?? [], $container);
 
 		if (!$authorizator instanceof AuthorizatorInterface) {
 			throw new \InvalidArgumentException(sprintf('授权器[%s]必须实现AuthorizatorInterface', $config['driver']));
@@ -311,15 +334,16 @@ class GateManager
 	 * 创建资源提供器
 	 *
 	 * @param array $config 配置
+	 * @param ContainerInterface|null $container DI容器
 	 * @return ResourceProviderInterface
 	 */
-	private function createResourceProvider(array $config): ResourceProviderInterface
+	private function createResourceProvider(array $config, ?ContainerInterface $container): ResourceProviderInterface
 	{
 		if (!isset($this->resourceProviders[$config['driver']])) {
 			throw new \InvalidArgumentException(sprintf('找不到授权器驱动[%s]', $config['driver']));
 		}
 
-		$resourceProvider = call_user_func($this->resourceProviders[$config['driver']], $config['params'] ?? []);
+		$resourceProvider = call_user_func($this->resourceProviders[$config['driver']], $config['params'] ?? [], $container);
 
 		if (!$resourceProvider instanceof ResourceProviderInterface) {
 			throw new \InvalidArgumentException(sprintf('资源提供器[%s]必须实现ResourceProviderInterface', $config['driver']));
