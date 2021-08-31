@@ -2,6 +2,10 @@
 
 namespace Gaara;
 
+use Gaara\Authentication\Authenticator\SessionAuthenticator;
+use Gaara\Authentication\Authenticator\SessionInterface;
+use Gaara\Authentication\Authenticator\TokenAuthenticator;
+use Gaara\Authentication\Authenticator\TokenFetcherInterface;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authentication\CredentialValidator\CallbackCredentialValidator;
 use Gaara\Authentication\CredentialValidator\GenericCredentialValidator;
@@ -11,8 +15,10 @@ use Gaara\Authentication\CredentialValidatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\Authorizator\GenericAuthorizator;
+use Gaara\Authorization\Authorizator\OnceTokenAuthenticator;
 use Gaara\Authorization\ResourceProviderInterface;
 use Psr\Container\ContainerInterface;
+use Psr\SimpleCache\CacheInterface;
 
 /**
  * Gate管理器
@@ -95,16 +101,100 @@ class GateManager
 	 */
 	public function init()
 	{
+		$this->registerAuthenticator('session', function (array $params, ?ContainerInterface $container) {
+			$sessionKey = $params['session_key'] ?? 'user';
+			$mode = $params['mode'] ?? SessionAuthenticator::MODE_ONLY_ID;
+			if (!isset($params['session']) && !is_null($container)) {
+				$session = $container->get(SessionInterface::class);
+			} else {
+				$session = $params['session'];
+				if (is_string($session) && !is_null($container)) {
+					$session = $container->get($session);
+				}
+			}
+
+			if (!$session instanceof SessionInterface) {
+				throw new \Exception('SessionAuthenticator认证器配置项session必须是实现SessionInterface的实例');
+			}
+
+			return new SessionAuthenticator($sessionKey, $session, $mode);
+		});
+
+		$this->registerAuthenticator('token', function (array $params, ?ContainerInterface $container) {
+			$tokenKey = $params['token_key'] ?? 'token';
+			if (!isset($params['salt'])) {
+				throw new \Exception('TokenAuthenticator认证器配置项salt必须提供');
+			}
+			$salt = $params['salt'];
+			$timeout = $params['timeout'] ?? 60 * 30;
+			if (!isset($params['token_fetcher']) && !is_null($container)) {
+				$tokenFetcher = $container->get(TokenFetcherInterface::class);
+			} else {
+				$tokenFetcher = $params['token_fetcher'];
+				if (is_string($tokenFetcher) && !is_null($container)) {
+					$tokenFetcher = $container->get($tokenFetcher);
+				}
+			}
+
+			if (!($tokenFetcher instanceof TokenFetcherInterface || is_callable($tokenFetcher))) {
+				throw new \Exception('TokenAuthenticator认证器配置项token_fetcher必须是实现TokenFetcherInterface的实例或callable类型');
+			}
+
+			if (!isset($params['cache']) && !is_null($container)) {
+				$cache = $container->get(CacheInterface::class);
+			} else {
+				$cache = $params['cache'];
+				if (is_string($cache) && !is_null($container)) {
+					$cache = $container->get($cache);
+				}
+			}
+
+			if (!$cache instanceof CacheInterface) {
+				throw new \Exception('TokenAuthenticator认证器配置项cache必须是实现CacheInterface的实例');
+			}
+
+			return new TokenAuthenticator($tokenKey, $salt, $timeout, $tokenFetcher, $cache);
+		});
+
+		$this->registerAuthenticator('once_token', function (array $params, ?ContainerInterface $container) {
+			$tokenKey = $params['token_key'] ?? 'token';
+			$expire = $params['expire'] ?? 60 * 5;
+			if (!isset($params['cache']) && !is_null($container)) {
+				$cache = $container->get(CacheInterface::class);
+			} else {
+				$cache = $params['cache'];
+				if (is_string($cache) && !is_null($container)) {
+					$cache = $container->get($cache);
+				}
+			}
+
+			if (!$cache instanceof CacheInterface) {
+				throw new \Exception('OnceTokenAuthenticator认证器配置项cache必须是实现CacheInterface的实例');
+			}
+
+			return new OnceTokenAuthenticator($tokenKey, $expire, $cache);
+		});
+
 		$this->registerCredentialValidator('generic', function (array $params, ?ContainerInterface $container) {
 			return new GenericCredentialValidator();
 		});
 
 		$this->registerCredentialValidator('username_password', function (array $params, ?ContainerInterface $container) {
 			$passwordKey = $params['password_key'] ?? 'password';
-			if (!isset($params['password_hasher']) || !$params['password_hasher'] instanceof PasswordHasherInterface) {
-				throw new \Exception('配置项password_hasher必须是实现PasswordHasherInterface接口的实例');
+			if (!isset($params['password_hasher']) && !is_null($container)) {
+				$passwordHasher = $container->get(PasswordHasherInterface::class);
+			} else {
+				$passwordHasher = $params['password_hasher'];
+				if (is_string($passwordHasher) && !is_null($container)) {
+					$passwordHasher = $container->get($passwordHasher);
+				}
 			}
-			return new UsernamePasswordCredentialValidator($passwordKey, $params['passwordHasher']);
+
+			if ($passwordHasher instanceof PasswordHasherInterface || is_callable($passwordHasher)) {
+				return new UsernamePasswordCredentialValidator($passwordKey, $params['passwordHasher']);
+			}
+
+			throw new \Exception('配置项password_hasher必须是实现PasswordHasherInterface接口的实例或callable类型');
 		});
 
 		$this->registerCredentialValidator('callback', function (array $params, ?ContainerInterface $container) {
