@@ -54,6 +54,9 @@ class UsernamePasswordCredentialValidator implements CredentialValidatorInterfac
 		}
 
 		$user = $userProvider->findByParams($credential);
+		if (is_null($user)) {
+			throw new InvalidCredentialException('无效登录凭证');
+		}
 
 		if (!$user instanceof PasswordInterface) {
 			throw new AuthenticationException('用户身份对象必须实现PasswordInterface接口');
