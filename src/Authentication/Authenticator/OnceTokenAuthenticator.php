@@ -31,6 +31,13 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 	protected $cache;
 
 	/**
+	 * 用户身份缓存
+	 *
+	 * @var UserInterface
+	 */
+	protected $user;
+
+	/**
 	 * 构造
 	 *
 	 * @param string $tokenKey 令牌key
@@ -52,6 +59,7 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 		$token = $this->generateToken($user);
 
 		$this->cache->set($token, $this->getCacheKey($user->id()), $this->expire);
+		$this->user = $user;
 
 		return base64_encode($token);
 	}
@@ -61,6 +69,10 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 	 */
 	public function isAuthenticated(): bool
 	{
+		if (!is_null($this->user)) {
+			return true;
+		}
+
 		$token = $this->getToken();
 		if (empty($token)) {
 			return false;
@@ -74,6 +86,10 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 	 */
 	public function id()
 	{
+		if (!is_null($this->user)) {
+			return $this->user->id();
+		}
+
 		$token = $this->getToken();
 		if (empty($token)) {
 			return null;
@@ -87,6 +103,10 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 	 */
 	public function user(UserProviderInterface $userProvider): ?UserInterface
 	{
+		if (!is_null($this->user)) {
+			return $this->user;
+		}
+
 		$token = $this->getToken();
 		if (empty($token)) {
 			return null;
