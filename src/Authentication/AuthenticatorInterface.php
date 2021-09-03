@@ -19,7 +19,7 @@ interface AuthenticatorInterface
 	 * @param UserInterface $user 用户身份
 	 * @return mixed
 	 */
-	function authenticate(UserInterface $user);
+	function authenticate(UserInterface $user): AuthenticateResult;
 
 	/**
 	 * 判断是否已认证

@@ -2,6 +2,7 @@
 
 namespace Gaara;
 
+use Gaara\Authentication\AuthenticateResult;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authentication\CredentialValidatorInterface;
 use Gaara\Authentication\UserProviderInterface;
@@ -63,10 +64,10 @@ class Gate
 	 * 登录
 	 *
 	 * @param array|callable $credential 登录凭证
-	 * @return mixed
+	 * @return AuthenticateResult
 	 * @throws AuthenticationException
 	 */
-	public function login($credential)
+	public function login($credential): AuthenticateResult
 	{
 		$user = $this->credentialValidator->validate($credential, $this->userProvider);
 

@@ -2,6 +2,7 @@
 
 namespace Gaara\Authentication\Authenticator;
 
+use Gaara\Authentication\AuthenticateResult;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\Authentication\UserProviderInterface;
@@ -51,13 +52,6 @@ class TokenAuthenticator implements AuthenticatorInterface
 	protected $cache;
 
 	/**
-	 * 用户身份缓存
-	 *
-	 * @var UserInterface
-	 */
-	protected $user;
-
-	/**
 	 * 构造
 	 *
 	 * @param string $tokenKey 令牌key
@@ -78,14 +72,15 @@ class TokenAuthenticator implements AuthenticatorInterface
 	/**
 	 * @inheritDoc
 	 */
-	public function authenticate(UserInterface $user): ?string
+	public function authenticate(UserInterface $user): AuthenticateResult
 	{
 		$package = $this->generateTokenPackage($user);
 
 		$this->cache->set($this->getCacheKey($user->id()), $package['token'], $this->timeout);
-		$this->user = $user;
 
-		return base64_encode(json_encode($package));
+		return new AuthenticateResult($user, [
+			'token' => base64_encode(json_encode($package))
+		]);
 	}
 
 	/**
@@ -93,10 +88,6 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 */
 	public function isAuthenticated(): bool
 	{
-		if (!is_null($this->user)) {
-			return true;
-		}
-
 		$package = $this->parseToken($this->getToken());
 		if ($package === false) {
 			return false;
@@ -110,10 +101,6 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 */
 	public function id()
 	{
-		if (!is_null($this->user)) {
-			return $this->user->id();
-		}
-
 		$package = $this->parseToken($this->getToken());
 		if ($package === false) {
 			return null;
@@ -127,10 +114,6 @@ class TokenAuthenticator implements AuthenticatorInterface
 	 */
 	public function user(UserProviderInterface $userProvider): ?UserInterface
 	{
-		if (!is_null($this->user)) {
-			return $this->user;
-		}
-
 		$package = $this->parseToken($this->getToken());
 		if ($package === false) {
 			return null;
