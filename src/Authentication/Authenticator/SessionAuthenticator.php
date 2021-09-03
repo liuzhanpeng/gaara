@@ -2,6 +2,7 @@
 
 namespace Gaara\Authentication\Authenticator;
 
+use Gaara\Authentication\AuthenticateResult;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authentication\Exception\AuthenticationException;
@@ -62,7 +63,7 @@ class SessionAuthenticator implements AuthenticatorInterface
 	/**
 	 * @inheritDoc
 	 */
-	public function authenticate(UserInterface $user): ?string
+	public function authenticate(UserInterface $user): AuthenticateResult
 	{
 		if ($this->mode === self::MODE_ALL_DATA) {
 			$this->session->set($this->sessionKey, $user);
@@ -70,7 +71,7 @@ class SessionAuthenticator implements AuthenticatorInterface
 			$this->session->set($this->sessionKey, $user->id());
 		}
 
-		return null;
+		return new AuthenticateResult($user);
 	}
 
 	/**
