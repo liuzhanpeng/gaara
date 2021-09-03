@@ -28,13 +28,6 @@ use Psr\SimpleCache\CacheInterface;
 class GateManager
 {
 	/**
-	 * Gate实例列表
-	 *
-	 * @var array
-	 */
-	private $gates = [];
-
-	/**
 	 * 配置
 	 *
 	 * @var array
@@ -308,31 +301,27 @@ class GateManager
 			$name = $this->config['default'];
 		}
 
-		if (!isset($this->gates[$name])) {
-			if (!isset($this->config['gates'][$name])) {
-				throw new \Exception(sprintf('找不到gate[%s]配置', $name));
-			}
-
-			$config = $this->config['gates'][$name];
-
-			$userProvider = $this->createUserProvider($config['user_provider'], $this->container);
-			$authenticator = $this->createAuthenticator($config['authenticator'], $this->container);
-			$credentialValidator = $this->createCredentialValidator($config['credential_validator'], $this->container);
-			$authorizator = null;
-			if (isset($config['authorizator'])) {
-				$authorizator = $this->createAuthorizator($config['authorizator'], $this->container);
-				if (!isset($config['resource_provider'])) {
-					throw new \Exception(sprintf('找不到gate[%s]的resource_provider配置', $name));
-				}
-
-				$resourceProvider = $this->createResourceProvider($config['resource_provider'], $this->container);
-				$authorizator->setResorceProvider($resourceProvider);
-			}
-
-			$this->gates[$name] = new Gate($userProvider, $authenticator, $credentialValidator, $authorizator);
+		if (!isset($this->config['gates'][$name])) {
+			throw new \Exception(sprintf('找不到gate[%s]配置', $name));
 		}
 
-		return $this->gates[$name];
+		$config = $this->config['gates'][$name];
+
+		$userProvider = $this->createUserProvider($config['user_provider'], $this->container);
+		$authenticator = $this->createAuthenticator($config['authenticator'], $this->container);
+		$credentialValidator = $this->createCredentialValidator($config['credential_validator'], $this->container);
+		$authorizator = null;
+		if (isset($config['authorizator'])) {
+			$authorizator = $this->createAuthorizator($config['authorizator'], $this->container);
+			if (!isset($config['resource_provider'])) {
+				throw new \Exception(sprintf('找不到gate[%s]的resource_provider配置', $name));
+			}
+
+			$resourceProvider = $this->createResourceProvider($config['resource_provider'], $this->container);
+			$authorizator->setResorceProvider($resourceProvider);
+		}
+
+		return new Gate($userProvider, $authenticator, $credentialValidator, $authorizator);
 	}
 
 	/**
