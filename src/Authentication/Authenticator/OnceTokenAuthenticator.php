@@ -3,7 +3,9 @@
 namespace Gaara\Authorization\Authorizator;
 
 use Gaara\Authentication\AuthenticateResult;
+use Gaara\Authentication\Authenticator\TokenFetcherInterface;
 use Gaara\Authentication\AuthenticatorInterface;
+use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\User\UserInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -25,6 +27,13 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 	protected $expire;
 
 	/**
+	 * 令牌获取器
+	 *
+	 * @var TokenFetcherInterface|callable
+	 */
+	protected $tokenFetcher;
+
+	/**
 	 * 缓存实例
 	 *
 	 * @var CacheInterface
@@ -36,12 +45,14 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 	 *
 	 * @param string $tokenKey 令牌key
 	 * @param integer $expire 令牌过期时间
+	 * @param TokenFetcherInterface|callable $tokenFetcher 令牌获取器
 	 * @param CacheInterface $cache 缓存实例
 	 */
-	public function __construct(string $tokenKey, int $expire, CacheInterface $cache)
+	public function __construct(string $tokenKey, int $expire, $tokenFetcher, CacheInterface $cache)
 	{
 		$this->tokenKey = $tokenKey;
 		$this->expire = $expire;
+		$this->tokenFetcher = $tokenFetcher;
 		$this->cache = $cache;
 	}
 
@@ -132,13 +143,19 @@ class OnceTokenAuthenticator implements AuthenticatorInterface
 	}
 
 	/**
-	 * 获取令牌
+	 * 从上下文中获取Token信息
 	 *
-	 * @return string
+	 * @return string|null
 	 */
-	protected function getToken(): string
+	protected function getToken(): ?string
 	{
-		return $_GET[$this->tokenKey];
+		if ($this->tokenFetcher instanceof TokenFetcherInterface) {
+			return $this->tokenFetcher->token($this->tokenKey);
+		} elseif (is_callable($this->tokenFetcher)) {
+			return call_user_func($this->tokenFetcher, $this->tokenKey);
+		} else {
+			throw new AuthenticationException('不支持的TokenFetcher类型');
+		}
 	}
 
 	/**
