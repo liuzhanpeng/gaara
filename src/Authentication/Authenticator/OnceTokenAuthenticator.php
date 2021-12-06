@@ -10,6 +10,11 @@ use Gaara\Authentication\UserProviderInterface;
 use Gaara\User\UserInterface;
 use Psr\SimpleCache\CacheInterface;
 
+/**
+ * 一次性令牌认证器
+ * 
+ * @author lzpeng <liuzhanpeng@gmail.com>
+ */
 class OnceTokenAuthenticator implements AuthenticatorInterface
 {
 	/**
