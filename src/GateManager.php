@@ -168,6 +168,23 @@ class GateManager
 		$this->registerAuthenticator('once_token', function (array $params, ?ContainerInterface $container) {
 			$tokenKey = $params['token_key'] ?? 'token';
 			$expire = $params['expire'] ?? 60 * 5;
+
+			if (!isset($params['token_fetcher'])) {
+				if (is_null($container)) {
+					throw new \Exception('未设置DI容器，自动获取TokenFetcher类失败');
+				}
+				$tokenFetcher = $container->get(TokenFetcherInterface::class);
+			} else {
+				$tokenFetcher = $params['token_fetcher'];
+				if (is_string($tokenFetcher) && !is_null($container)) {
+					$tokenFetcher = $container->get($tokenFetcher);
+				}
+			}
+
+			if (!($tokenFetcher instanceof TokenFetcherInterface || is_callable($tokenFetcher))) {
+				throw new \Exception('TokenAuthenticator认证器配置项token_fetcher必须是实现TokenFetcherInterface的实例或callable类型');
+			}
+
 			if (!isset($params['cache'])) {
 				if (is_null($container)) {
 					throw new \Exception('未设置DI容器，自动获取Cache类失败');
@@ -184,7 +201,7 @@ class GateManager
 				throw new \Exception('OnceTokenAuthenticator认证器配置项cache必须是实现CacheInterface的实例');
 			}
 
-			return new OnceTokenAuthenticator($tokenKey, $expire, $cache);
+			return new OnceTokenAuthenticator($tokenKey, $expire, $tokenFetcher, $cache);
 		});
 
 		$this->registerCredentialValidator('generic', function (array $params, ?ContainerInterface $container) {

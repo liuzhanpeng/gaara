@@ -5,7 +5,6 @@ namespace Gaara\Authentication\Authenticator;
 use Gaara\Authentication\AuthenticateResult;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authentication\UserProviderInterface;
-use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\User\UserInterface;
 
 /**

@@ -4,6 +4,7 @@ namespace Gaara\Authentication;
 
 use Gaara\User\UserInterface;
 use Gaara\Authentication\UserProviderInterface;
+use Gaara\Authentication\Exception\AuthenticationException;
 
 /**
  * 认证器接口
@@ -14,10 +15,11 @@ interface AuthenticatorInterface
 {
 	/**
 	 * 认证上下文的用户身份
-	 * 成功返回令牌，否则抛出异常
+	 * 成功返回认证结果，否则抛出异常
 	 *
 	 * @param UserInterface $user 用户身份
-	 * @return mixed
+	 * @return AuthenticateResult
+	 * @throws AuthenticationException
 	 */
 	function authenticate(UserInterface $user): AuthenticateResult;
 

@@ -54,7 +54,7 @@ class GenericUser implements UserInterface, \ArrayAccess
 	/**
 	 * @inheritDoc
 	 */
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		return isset($this->data[$offset]);
 	}
@@ -70,7 +70,7 @@ class GenericUser implements UserInterface, \ArrayAccess
 	/**
 	 * @inheritDoc
 	 */
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		$this->data[$offset] = $value;
 	}
@@ -78,7 +78,7 @@ class GenericUser implements UserInterface, \ArrayAccess
 	/**
 	 * @inheritDoc
 	 */
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		unset($this->data[$offset]);
 	}
