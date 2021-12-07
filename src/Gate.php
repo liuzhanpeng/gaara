@@ -138,7 +138,7 @@ class Gate
 			return false;
 		}
 
-		if (!is_null($this->authorizator)) {
+		if (is_null($this->authorizator)) {
 			throw new \Exception('未设置授权器');
 		}
 
