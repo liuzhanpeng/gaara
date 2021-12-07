@@ -413,7 +413,7 @@ class GateManager
 	 *
 	 * @param array $config 配置
 	 * @param ContainerInterface|null $container DI容器
-	 * @return AuthenticatorInterface
+	 * @return CredentialValidatorInterface
 	 */
 	private function createCredentialValidator(array $config, ?ContainerInterface $container): CredentialValidatorInterface
 	{
