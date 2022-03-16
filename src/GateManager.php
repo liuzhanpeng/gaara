@@ -15,7 +15,7 @@ use Gaara\Authentication\CredentialValidatorInterface;
 use Gaara\Authorization\AuthorizatorInterface;
 use Gaara\Authentication\UserProviderInterface;
 use Gaara\Authorization\Authorizator\GenericAuthorizator;
-use Gaara\Authorization\Authorizator\OnceTokenAuthenticator;
+use Gaara\Authentication\Authorizator\OnceTokenAuthenticator;
 use Gaara\Authorization\ResourceProviderInterface;
 use Psr\Container\ContainerInterface;
 use Psr\SimpleCache\CacheInterface;
