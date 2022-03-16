@@ -1,9 +1,8 @@
 <?php
 
-namespace Gaara\Authorization\Authorizator;
+namespace Gaara\Authentication\Authorizator;
 
 use Gaara\Authentication\AuthenticateResult;
-use Gaara\Authentication\Authenticator\TokenFetcherInterface;
 use Gaara\Authentication\AuthenticatorInterface;
 use Gaara\Authentication\Exception\AuthenticationException;
 use Gaara\Authentication\UserProviderInterface;
