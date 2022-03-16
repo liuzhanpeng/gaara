@@ -23,7 +23,7 @@ class CallbackCredentialValidator implements CredentialValidatorInterface
 			throw new InvalidCredentialException('登录凭证必须是可调用类型');
 		}
 
-		$user = call_user_func($this->callback, $userProvider);
+		$user = call_user_func($credential, $userProvider);
 
 		if (is_null($user)) {
 			throw new InvalidCredentialException('无效登录凭证');
