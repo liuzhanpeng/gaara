@@ -1,6 +1,6 @@
 <?php
 
-namespace Gaara\Authentication\Authorizator;
+namespace Gaara\Authentication\Authenticator;
 
 use Gaara\Authentication\AuthenticateResult;
 use Gaara\Authentication\AuthenticatorInterface;
