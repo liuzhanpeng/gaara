@@ -2,8 +2,6 @@
 
 namespace Gaara;
 
-use Gaara\Exception\AuthenticateException;
-
 /**
  * 用户提供器
  * 
@@ -23,8 +21,7 @@ interface UserProviderInterface
      * 根据登录凭证查找用户并返回, 失败抛出异常
      *
      * @param array $credential 登录凭证
-     * @return UserInterface
-     * @throws AuthenticateException
+     * @return UserInterface|null
      */
-    function findByCredential(array $credential): UserInterface;
+    function findByCredential(array $credential): ?UserInterface;
 }

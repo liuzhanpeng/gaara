@@ -3,6 +3,7 @@
 namespace Gaara\Authenticator;
 
 use Gaara\AuthenticatorInterface;
+use Gaara\CredentialValidatorInterface;
 use Gaara\Exception\InvalidCredentialException;
 use Gaara\Identity;
 use Gaara\UserInterface;
@@ -23,6 +24,13 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface
     protected UserProviderInterface $userProvider;
 
     /**
+     * 登录凭证验证器
+     *
+     * @var CredentialValidatorInterface|null
+     */
+    protected ?CredentialValidatorInterface $credentialValidator;
+
+    /**
      * @inheritDoc
      */
     public function setUserProvider(UserProviderInterface $userProvider)
@@ -33,9 +41,21 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface
     /**
      * @inheritDoc
      */
+    public function setCredentialValidator(CredentialValidatorInterface $credentialValidator)
+    {
+        $this->credentialValidator = $credentialValidator;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function authenticate(array $credential): Identity
     {
-        $user = $this->userProvider->findByCredential($credential);
+        if (!is_null($this->credentialValidator)) {
+            $user = $this->credentialValidator->validateCredential($this->userProvider, $credential);
+        } else {
+            $user = $this->userProvider->findByCredential($credential);
+        }
 
         return $this->setUser($user);
     }
