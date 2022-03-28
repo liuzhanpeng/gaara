@@ -1,2 +1,2 @@
 # gaara
-An authentication &amp; authorization framework
+An authentication framework
