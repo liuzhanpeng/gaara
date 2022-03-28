@@ -4,7 +4,6 @@ namespace Gaara\Authenticator;
 
 use Gaara\AuthenticatorInterface;
 use Gaara\CredentialValidatorInterface;
-use Gaara\Exception\InvalidCredentialException;
 use Gaara\Identity;
 use Gaara\UserInterface;
 use Gaara\UserProviderInterface;

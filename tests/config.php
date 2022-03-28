@@ -15,6 +15,10 @@ return [
 		'user_provider' => [
 			'driver' => '',
 		],
+		'credential_validator' => [
+			'driver' => 'password',
+			'field' => 'password',
+		],
 		'accessor' => [
 			'driver' => 'generic',
 			'permission_provider' => 'xxx'

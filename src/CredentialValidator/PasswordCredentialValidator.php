@@ -10,13 +10,24 @@ use Gaara\UserProviderInterface;
 
 /**
  * 含密码的登录凭证验证器
+ * 使用password_verify验证
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
 class PasswordCrdentialValidator implements CredentialValidatorInterface
 {
+    /**
+     * 密码域
+     *
+     * @var string
+     */
     protected string $passwordField;
 
+    /**
+     * 构造
+     *
+     * @param string $passwordField
+     */
     public function __construct(string $passwordField)
     {
         $this->passwordField = $passwordField;
@@ -28,7 +39,7 @@ class PasswordCrdentialValidator implements CredentialValidatorInterface
     public function validateCredential(UserProviderInterface $userProvider, array $credential): UserInterface
     {
         if (!isset($credential[$this->passwordField])) {
-            throw new InvalidCredentialException('登录凭证未含有密码');
+            throw new InvalidCredentialException('登录凭证未含有密码域');
         }
 
         $password = $credential[$this->passwordField];
@@ -43,7 +54,7 @@ class PasswordCrdentialValidator implements CredentialValidatorInterface
             throw new AuthenticateException('User未实现PasswordAwareInterface');
         }
 
-        if (!$this->hasher->verify($user->password(), $password)) {
+        if (!password_verify($password, $user->password())) {
             throw new InvalidCredentialException('密码错误');
         }
 
