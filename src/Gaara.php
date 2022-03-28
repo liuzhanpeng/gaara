@@ -249,7 +249,7 @@ class Gaara
      * @param string $name
      * @return Guard
      */
-    public function make(?string $name): Guard
+    public function make(?string $name = null): Guard
     {
         $name = $name ?? $this->defaultName;
         if (!isset($this->guards[$name])) {
