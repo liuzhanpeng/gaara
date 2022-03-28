@@ -46,9 +46,9 @@ class Gaara
     /**
      * DI容器
      *
-     * @var ContainerInterface
+     * @var ContainerInterface|null
      */
-    protected ContainerInterface $container;
+    protected ?ContainerInterface $container;
 
     /**
      * UserProvider注册列表
