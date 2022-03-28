@@ -25,9 +25,9 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface
     /**
      * 登录凭证验证器
      *
-     * @var CredentialValidatorInterface|null
+     * @var CredentialValidatorInterface
      */
-    protected ?CredentialValidatorInterface $credentialValidator;
+    protected CredentialValidatorInterface $credentialValidator;
 
     /**
      * @inheritDoc
@@ -50,11 +50,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface
      */
     public function authenticate(array $credential): Identity
     {
-        if (!is_null($this->credentialValidator)) {
-            $user = $this->credentialValidator->validateCredential($this->userProvider, $credential);
-        } else {
-            $user = $this->userProvider->findByCredential($credential);
-        }
+        $user = $this->credentialValidator->validateCredential($this->userProvider, $credential);
 
         return $this->setUser($user);
     }

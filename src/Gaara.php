@@ -7,6 +7,7 @@ use Gaara\Accessor\PermissionProviderInterface;
 use Gaara\Authenticator\SessionAuthenticator;
 use Gaara\Authenticator\SessionInterface;
 use Gaara\Authenticator\TokenAuthenticator;
+use Gaara\CredentialValidator\NoopCredentialValidator;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -47,6 +48,13 @@ class Gaara
      * @var array
      */
     protected array $userProviderRegistry;
+
+    /**
+     * CredentialValidator注册列表
+     *
+     * @var array
+     */
+    protected array $credentialValidatorRegistry;
 
     /**
      * Authenticator注册列表
@@ -189,6 +197,18 @@ class Gaara
     }
 
     /**
+     * 注册CredentialValidator
+     *
+     * @param string $driver
+     * @param callable $callback
+     * @return void
+     */
+    public function registerCredentialValidator(string $driver, callable $callback)
+    {
+        $this->credentialValidatorRegistry[$driver] = $callback;
+    }
+
+    /**
      * 注册Authenticator
      *
      * @param string $driver
@@ -225,26 +245,29 @@ class Gaara
                 !isset($this->config[$name])
                 || !is_array($this->config[$name])
                 || !isset($this->config[$name]['authenticator'])
-                || !isset($this->config[$name]['provider'])
+                || !isset($this->config[$name]['user_provider'])
             ) {
                 throw new \Exception(sprintf('[Gaara配置错误]找不到有效的Guard[%s]配置项', $name));
             }
 
             $guardConfig = $this->config[$name];
 
-            $userProvider = $this->createUserProvider($guardConfig['provider']);
+            $userProvider = $this->createUserProvider($guardConfig['user_provider']);
+            if (!isset($guardConfig['credential_validator'])) {
+                $credentialValidator = new NoopCredentialValidator();
+            } else {
+                $credentialValidator = $this->createCredentialValidator($guardConfig['credential_validator']);
+            }
             $authenticator = $this->createAuthenticator($guardConfig['authenticator']);
+            $authenticator->setUserProvider($userProvider);
+            $authenticator->setCredentialValidator($credentialValidator);
 
             $accessor = null;
             if (isset($guardConfig['accessor'])) {
                 $accessor = $this->createAccessor($guardConfig['accessor']);
             }
 
-            $this->guards[$name] = new Guard(
-                $userProvider,
-                $authenticator,
-                $accessor
-            );
+            $this->guards[$name] = new Guard($authenticator, $accessor);
         }
 
         return $this->guards[$name];
@@ -280,6 +303,26 @@ class Gaara
         }
 
         return $userProvider;
+    }
+
+    /**
+     * 创建CredentialValidator
+     *
+     * @param array $config
+     * @return CredentialValidatorInterface
+     */
+    protected function createCredentialValidator(array $config): CredentialValidatorInterface
+    {
+        if (!isset($this->credentialValidatorRegistry[$config['driver']])) {
+            throw new \Exception(sprintf('找不到CredentialValidator驱动[%s]', $config['driver']));
+        }
+
+        $credentialValidator = call_user_func($this->credentialValidatorRegistry[$config['driver']], $this->container, $config);
+        if (!$credentialValidator instanceof CredentialValidatorInterface) {
+            throw new \Exception('CredentialValidator驱动[%s]返回对象未实现CredentialValidatorInterface', $config['driver']);
+        }
+
+        return $credentialValidator;
     }
 
     /**

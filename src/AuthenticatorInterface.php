@@ -2,6 +2,7 @@
 
 namespace Gaara;
 
+use C;
 use Gaara\Exception\AuthenticateException;
 
 /**
@@ -18,6 +19,14 @@ interface AuthenticatorInterface
      * @return void
      */
     function setUserProvider(UserProviderInterface $userProvider);
+
+    /**
+     * 设置登录凭证验证器
+     *
+     * @param CredentialValidatorInterface $credentialValidator
+     * @return void
+     */
+    function setCredentialValidator(CredentialValidatorInterface $credentialValidator);
 
     /**
      * 认证登录凭证

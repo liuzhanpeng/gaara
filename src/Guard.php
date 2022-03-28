@@ -23,17 +23,13 @@ class Guard
     /**
      * 构造
      *
-     * @param UserProviderInterface $userProvider
      * @param AuthenticatorInterface $authenticator
      * @param AccessorInterface|null $accessor
      */
     public function __construct(
-        UserProviderInterface $userProvider,
         AuthenticatorInterface $authenticator,
         ?AccessorInterface $accessor
     ) {
-        $authenticator->setUserProvider($userProvider);
-
         $this->authenticator = $authenticator;
         $this->accessor = $accessor;
     }
