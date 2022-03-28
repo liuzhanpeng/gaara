@@ -8,6 +8,7 @@ use Gaara\Authenticator\SessionAuthenticator;
 use Gaara\Authenticator\SessionInterface;
 use Gaara\Authenticator\TokenAuthenticator;
 use Gaara\CredentialValidator\NoopCredentialValidator;
+use Gaara\CredentialValidator\PasswordCredentialValidator;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -162,6 +163,16 @@ class Gaara
             }
 
             return new TokenAuthenticator($request, $cache, $key, $timeout, $config['salt'], $flash);
+        });
+
+        $this->registerCredentialValidator('noop', function (?ContainerInterface $container, array $config) {
+            return new NoopCredentialValidator();
+        });
+
+        $this->registerCredentialValidator('password', function (?ContainerInterface $container, array $config) {
+            $passwordField = $config['field'] ?? 'password';
+
+            return new PasswordCredentialValidator($passwordField);
         });
 
         $this->registerAccessor('generic', function (?ContainerInterface $container, array $config) {
