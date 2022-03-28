@@ -9,7 +9,7 @@ use Gaara\Authenticator\SessionInterface;
 use Gaara\Authenticator\TokenAuthenticator;
 use Gaara\CredentialValidator\NoopCredentialValidator;
 use Psr\Container\ContainerInterface;
-use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\CacheInterface;
 
 /**
@@ -133,8 +133,8 @@ class Gaara
 
             $request = null;
             if (!isset($config['request'])) {
-                if (!is_null($container) && $container->has(RequestInterface::class)) {
-                    $request = $container->get(RequestInterface::class);
+                if (!is_null($container) && $container->has(ServerRequestInterface::class)) {
+                    $request = $container->get(ServerRequestInterface::class);
                 }
             } elseif (is_callable($config['request'])) {
                 $request = call_user_func($config['request'], $container);
@@ -142,7 +142,7 @@ class Gaara
                 $request = $config['request'];
             }
 
-            if (is_null($request) && !$request instanceof RequestInterface) {
+            if (is_null($request) && !$request instanceof ServerRequestInterface) {
                 throw new \Exception('TokenAuthenticator无法创建Request对象');
             }
 
