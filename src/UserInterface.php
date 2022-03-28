@@ -14,5 +14,5 @@ interface UserInterface
      *
      * @return string|integer
      */
-    function id(): int;
+    function id();
 }

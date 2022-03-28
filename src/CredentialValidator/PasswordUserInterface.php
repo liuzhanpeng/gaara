@@ -2,12 +2,14 @@
 
 namespace Gaara\CredentialValidator;
 
+use Gaara\UserInterface;
+
 /**
- * 用户密码接口
+ * 含密码的用户接口
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
-interface PasswordInterface
+interface PasswordUserInterface extends UserInterface
 {
     /**
      * 返回密码

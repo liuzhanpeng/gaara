@@ -210,6 +210,6 @@ class TokenAuthenticator extends AbstractAuthenticator
      */
     protected function getCacheKey($userId): string
     {
-        return sprintf('%s:%s', $this->tokenKey, $userId);
+        return sprintf('%s-%s', $this->tokenKey, $userId);
     }
 }

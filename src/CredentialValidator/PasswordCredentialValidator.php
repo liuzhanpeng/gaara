@@ -14,7 +14,7 @@ use Gaara\UserProviderInterface;
  * 
  * @author lzpeng <liuzhanpeng@gmail.com>
  */
-class PasswordCrdentialValidator implements CredentialValidatorInterface
+class PasswordCredentialValidator implements CredentialValidatorInterface
 {
     /**
      * 密码域
@@ -50,7 +50,7 @@ class PasswordCrdentialValidator implements CredentialValidatorInterface
             throw new InvalidCredentialException('无效登录凭证');
         }
 
-        if (!$user instanceof PasswordInterface) {
+        if (!$user instanceof PasswordUserInterface) {
             throw new AuthenticateException('User未实现PasswordAwareInterface');
         }
 

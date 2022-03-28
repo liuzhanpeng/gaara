@@ -16,11 +16,17 @@
         "psr/http-message": "^1.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.5",
+        "symfony/cache": "^5.4"
     },
     "autoload": {
         "psr-4": {
             "Gaara\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gaara\\Tests\\": "tests/"
         }
     }
 }
