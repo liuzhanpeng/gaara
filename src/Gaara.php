@@ -26,7 +26,14 @@ class Gaara
      *
      * @var array
      */
-    private array $config;
+    protected array $config;
+
+    /**
+     * 默认Guard名称
+     *
+     * @var string
+     */
+    protected string $defaultName;
 
     /**
      * Guard实例列表
@@ -75,12 +82,16 @@ class Gaara
      *
      * @param array $config
      */
-    public function __construct(array $config, bool $registerDdeaultDriver = true)
-    {
+    public function __construct(
+        array $config,
+        string $defaultName = 'default',
+        bool $registerDefaultDriver = true
+    ) {
         $this->config = $config;
+        $this->defaultName = $defaultName;
         $this->guards = [];
 
-        if ($registerDdeaultDriver) {
+        if ($registerDefaultDriver) {
             $this->registerDefaultDriver();
         }
     }
@@ -238,8 +249,9 @@ class Gaara
      * @param string $name
      * @return Guard
      */
-    public function make(string $name = 'default'): Guard
+    public function make(?string $name): Guard
     {
+        $name = $name ?? $this->defaultName;
         if (!isset($this->guards[$name])) {
             if (
                 !isset($this->config[$name])
