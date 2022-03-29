@@ -107,6 +107,23 @@ class TokenAuthenticator extends AbstractAuthenticator
     /**
      * @inheritDoc
      */
+    public function id()
+    {
+        if (!$this->isAuthenticated()) {
+            return null;
+        }
+
+        $package = $this->getTokenPackage();
+        if (is_null($package)) {
+            return null;
+        }
+
+        return $package['id'];
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function user(): ?UserInterface
     {
         $package = $this->getTokenPackage();

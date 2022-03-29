@@ -69,6 +69,16 @@ class Guard
     }
 
     /**
+     * 返回用户标识
+     *
+     * @return string|integer|null
+     */
+    public function id()
+    {
+        return $this->authenticator->id();
+    }
+
+    /**
      * 返回当前用户
      *
      * @return UserInterface|null

@@ -53,6 +53,13 @@ interface AuthenticatorInterface
     function isAuthenticated(): bool;
 
     /**
+     * 返回用户标识
+     *
+     * @return string|integer
+     */
+    function id();
+
+    /**
      * 返回当前用户身份
      *
      * @return UserInterface|null
