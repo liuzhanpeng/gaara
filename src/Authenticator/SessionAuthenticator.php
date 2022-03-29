@@ -59,6 +59,18 @@ class SessionAuthenticator extends AbstractAuthenticator
     /**
      * @inheritDoc
      */
+    public function id()
+    {
+        if (!$this->isAuthenticated()) {
+            return null;
+        }
+
+        return $this->session->get($this->sessionKey);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function user(): ?UserInterface
     {
         if (!$this->isAuthenticated()) {
