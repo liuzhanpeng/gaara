@@ -1,6 +1,6 @@
 <?php
 
-use Psr\Container\ContainerInterface;
+use Gaara\Tests\TestListener;
 
 return [
 	'user' => [
@@ -23,5 +23,10 @@ return [
 			'driver' => 'generic',
 			'permission_provider' => 'xxx'
 		],
+		'event' => [
+			'after_login' => [
+				TestListener::class,
+			],
+		]
 	],
 ];

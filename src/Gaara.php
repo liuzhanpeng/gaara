@@ -9,6 +9,7 @@ use Gaara\Authenticator\SessionInterface;
 use Gaara\Authenticator\TokenAuthenticator;
 use Gaara\CredentialValidator\NoopCredentialValidator;
 use Gaara\CredentialValidator\PasswordCredentialValidator;
+use Gaara\Event\EventDispatcher;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -49,6 +50,13 @@ class Gaara
      * @var ContainerInterface|null
      */
     protected ?ContainerInterface $container;
+
+    /**
+     * 事件分发器
+     *
+     * @var EventDispatcher|null
+     */
+    protected ?EventDispatcher $eventDispatcher;
 
     /**
      * UserProvider注册列表
@@ -207,6 +215,20 @@ class Gaara
     }
 
     /**
+     * 返回事件分发器
+     *
+     * @return EventDispatcher
+     */
+    protected function eventDispatcher(): EventDispatcher
+    {
+        if (is_null($this->eventDispatcher)) {
+            $this->eventDispatcher = new EventDispatcher($this->container);
+        }
+
+        return $this->eventDispatcher;
+    }
+
+    /**
      * 注册UserProvider
      *
      * @param string $driver
@@ -290,7 +312,18 @@ class Gaara
                 $accessor = $this->createAccessor($guardConfig['accessor']);
             }
 
-            $this->guards[$name] = new Guard($authenticator, $accessor);
+            // 注册事件监听器
+            $eventDispatcher = $this->eventDispatcher();
+            if (isset($guardConfig['event'])) {
+                foreach ($guardConfig['event'] as $eventName => $listeners) {
+                    foreach ($listeners as $listener) {
+                        $eventName = sprintf('%s.%s', $name, $eventName);
+                        $eventDispatcher->addListener($eventName, $listener);
+                    }
+                }
+            }
+
+            $this->guards[$name] = new Guard($name, $authenticator, $accessor, $eventDispatcher);
         }
 
         return $this->guards[$name];
