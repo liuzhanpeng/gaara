@@ -85,7 +85,11 @@ class Guard
      */
     public function loginAs(UserInterface $user): Identity
     {
-        return $this->authenticator->setUser($user);
+        $identity = $this->authenticator->setUser($user);
+
+        $this->dispatchEvent('after_login', new AfterLoginEvent($identity));
+
+        return $identity;
     }
 
     /**

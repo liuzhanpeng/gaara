@@ -99,6 +99,7 @@ class Gaara
         $this->config = $config;
         $this->defaultName = $defaultName;
         $this->guards = [];
+        $this->eventDispatcher = null;
 
         if ($registerDefaultDriver) {
             $this->registerDefaultDriver();
