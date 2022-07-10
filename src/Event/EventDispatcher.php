@@ -31,7 +31,7 @@ class EventDispatcher
      *
      * @param ContainerInterface|null $container
      */
-    public function __construct(?ContainerInterface $container)
+    public function __construct(?ContainerInterface $container = null)
     {
         $this->container = $container;
     }
@@ -69,6 +69,7 @@ class EventDispatcher
             if (is_callable($listener)) {
                 call_user_func($listener, $event);
             } elseif (is_string($listener)) {
+                $instance = null;
                 if (!is_null($this->container)) {
                     $instance = $this->container->get($listener);
                 }
