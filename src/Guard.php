@@ -2,10 +2,21 @@
 
 namespace Gaara;
 
+use Gaara\Event\AfterLoginEvent;
+use Gaara\Event\BeforeLoginEvent;
+use Gaara\Event\BeforeLogoutEvent;
+use Gaara\Event\EventDispatcher;
 use Gaara\Exception\AuthenticateException;
 
 class Guard
 {
+    /**
+     * 标识
+     *
+     * @var string
+     */
+    protected string $id;
+
     /**
      * 认证器
      *
@@ -21,17 +32,30 @@ class Guard
     protected ?AccessorInterface $accessor;
 
     /**
+     * 事件分发器
+     *
+     * @var EventDispatcher|null
+     */
+    protected ?EventDispatcher $eventDispatcher;
+
+    /**
      * 构造
      *
+     * @param string $id
      * @param AuthenticatorInterface $authenticator
      * @param AccessorInterface|null $accessor
+     * @param EventDispatcherInterface $eventDispatcher
      */
     public function __construct(
+        string $id,
         AuthenticatorInterface $authenticator,
-        ?AccessorInterface $accessor
+        ?AccessorInterface $accessor = null,
+        ?EventDispatcher $eventDispatcher  = null
     ) {
+        $this->id = $id;
         $this->authenticator = $authenticator;
         $this->accessor = $accessor;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -43,7 +67,13 @@ class Guard
      */
     public function login(array $credential): Identity
     {
-        return $this->authenticator->authenticate($credential);
+        $this->dispatchEvent('before_login', new BeforeLoginEvent($credential));
+
+        $identity = $this->authenticator->authenticate($credential);
+
+        $this->dispatchEvent('after_login', new AfterLoginEvent($identity));
+
+        return $identity;
     }
 
     /**
@@ -95,6 +125,8 @@ class Guard
      */
     public function logout()
     {
+        $this->dispatchEvent('before_logout', new BeforeLogoutEvent($this->authenticator->user()));
+
         $this->authenticator->clearUser();
     }
 
@@ -104,7 +136,7 @@ class Guard
      * @param string $permission
      * @return boolean
      */
-    public function can($permission): bool
+    public function can(string $permission): bool
     {
         if (is_null($this->accessor)) {
             throw new \Exception('未设置访问控制器');
@@ -115,5 +147,23 @@ class Guard
         }
 
         return $this->accessor->check($this->user(), $permission);
+    }
+
+    /**
+     * 分发事件
+     *
+     * @param string $name
+     * @param object $event
+     * @return void
+     */
+    private function dispatchEvent(string $name, object $event)
+    {
+        if (is_null($this->eventDispatcher)) {
+            return;
+        }
+
+        $name = sprintf('%s.%s', $this->id, $name);
+
+        $this->eventDispatcher->dispatch($name, $event);
     }
 }

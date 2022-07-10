@@ -2,7 +2,6 @@
 
 namespace Gaara;
 
-use C;
 use Gaara\Exception\AuthenticateException;
 
 /**
