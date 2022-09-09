@@ -57,6 +57,13 @@ class TokenAuthenticator extends AbstractAuthenticator
     protected bool $flash;
 
     /**
+     * 支持认证后同时在线
+     *
+     * @var boolean
+     */
+    protected bool $concurrence;
+
+    /**
      * 构造
      *
      * @param ServerRequestInterface $request
@@ -65,6 +72,7 @@ class TokenAuthenticator extends AbstractAuthenticator
      * @param integer $timeout
      * @param string $salt
      * @param boolean $flash
+     * @param boolean $concurrence
      */
     public function __construct(
         ServerRequestInterface $request,
@@ -72,7 +80,8 @@ class TokenAuthenticator extends AbstractAuthenticator
         string $tokenKey,
         int $timeout,
         string $salt,
-        bool $flash = false
+        bool $flash = false,
+        bool $concurrence = false
     ) {
         $this->request = $request;
         $this->cache = $cache;
@@ -80,6 +89,7 @@ class TokenAuthenticator extends AbstractAuthenticator
         $this->timeout = $timeout;
         $this->salt = $salt;
         $this->flash = $flash;
+        $this->concurrence = $concurrence;
     }
 
     /**
@@ -89,7 +99,11 @@ class TokenAuthenticator extends AbstractAuthenticator
     {
         $package = $this->generateTokenPackage($user);
 
-        $this->cache->set($this->getCacheKey($user->id()), $package['token'], $this->timeout);
+        if ($this->concurrence) {
+            $this->cache->set($this->getCacheKey($package['token']), $package['id'], $this->timeout);
+        } else {
+            $this->cache->set($this->getCacheKey($user->id()), $package['token'], $this->timeout);
+        }
 
         return new Identity($user, [
             'token' => base64_encode(json_encode($package)),
@@ -137,9 +151,17 @@ class TokenAuthenticator extends AbstractAuthenticator
         }
 
         if ($this->flash === true) {
-            $this->cache->delete($this->getCacheKey($package['id']));
+            if ($this->concurrence) {
+                $this->cache->delete($this->getCacheKey($package['token']));
+            } else {
+                $this->cache->delete($this->getCacheKey($package['id']));
+            }
         } else {
-            $this->cache->set($this->getCacheKey($package['id']), $package['token'], $this->timeout);
+            if ($this->concurrence) {
+                $this->cache->set($this->getCacheKey($package['token']), $package['id'], $this->timeout);
+            } else {
+                $this->cache->set($this->getCacheKey($package['id']), $package['token'], $this->timeout);
+            }
         }
 
         return $user;
@@ -193,9 +215,16 @@ class TokenAuthenticator extends AbstractAuthenticator
         }
 
         // 对比token
-        $token = $this->cache->get($this->getCacheKey($package['id']));
-        if (is_null($token) || strcmp($token, $package['token']) !== 0) {
-            return null;
+        if ($this->concurrence) {
+            $id = $this->cache->get($package['token']);
+            if (is_null($id) || strcmp($id, $package['id']) !== 0) {
+                return null;
+            }
+        } else {
+            $token = $this->cache->get($this->getCacheKey($package['id']));
+            if (is_null($token) || strcmp($token, $package['token']) !== 0) {
+                return null;
+            }
         }
 
         return $package;
