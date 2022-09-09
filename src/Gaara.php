@@ -137,6 +137,7 @@ class Gaara
             $key = $config['key'] ?? '__token__';
             $timeout = $config['timeout'] ?? 60 * 30;
             $flash = $config['flash'] ?? false;
+            $concurrence = $config['concurrence'] ?? false;
             if (!isset($config['salt'])) {
                 throw new \Exception('TokenAuthenticator必须配置salt');
             }
@@ -171,7 +172,7 @@ class Gaara
                 throw new \Exception('TokenAuthenticator无法创建Cache对象');
             }
 
-            return new TokenAuthenticator($request, $cache, $key, $timeout, $config['salt'], $flash);
+            return new TokenAuthenticator($request, $cache, $key, $timeout, $config['salt'], $flash, $concurrence);
         });
 
         $this->registerCredentialValidator('noop', function (?ContainerInterface $container, array $config) {
