@@ -216,7 +216,7 @@ class TokenAuthenticator extends AbstractAuthenticator
 
         // 对比token
         if ($this->concurrence) {
-            $id = $this->cache->get($package['token']);
+            $id = $this->cache->get($this->getCacheKey($package['token']));
             if (is_null($id) || strcmp($id, $package['id']) !== 0) {
                 return null;
             }
