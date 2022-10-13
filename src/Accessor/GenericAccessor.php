@@ -34,7 +34,7 @@ class GenericAccessor implements AccessorInterface
      */
     public function check(UserInterface $user, string $permission): bool
     {
-        if ($user instanceof RootUserInterface) {
+        if ($user instanceof RootUserInterface && $user->isRoot()) {
             return true;
         }
 
