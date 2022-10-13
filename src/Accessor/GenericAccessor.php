@@ -34,6 +34,10 @@ class GenericAccessor implements AccessorInterface
      */
     public function check(UserInterface $user, string $permission): bool
     {
+        if ($user instanceof RootUserInterface) {
+            return true;
+        }
+
         foreach ($this->permissionProvider->permissions($user) as $item) {
             if ($item === $permission) {
                 return true;
