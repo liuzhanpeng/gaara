@@ -115,7 +115,7 @@ class TokenAuthenticator extends AbstractAuthenticator
      */
     public function isAuthenticated(): bool
     {
-        return !is_null($this->getTokenPackage());
+        return !is_null($this->user());
     }
 
     /**
